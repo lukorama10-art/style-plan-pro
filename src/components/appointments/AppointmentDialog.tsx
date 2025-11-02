@@ -49,7 +49,18 @@ export function AppointmentDialog({
   const { professionals } = useProfessionals();
 
   const selectedServiceId = watch("service_id");
+  const selectedProfessionalId = watch("professional_id");
   const selectedDate = watch("appointment_date");
+
+  // Filter services based on selected professional
+  const availableServices = selectedProfessionalId
+    ? services?.filter((service) => {
+        const professional = professionals?.find(
+          (p) => p.id === selectedProfessionalId
+        );
+        return professional?.services?.includes(service.id);
+      })
+    : services;
 
   useEffect(() => {
     if (appointment) {
@@ -127,12 +138,19 @@ export function AppointmentDialog({
             <Select
               onValueChange={(value) => setValue("service_id", value)}
               defaultValue={appointment?.service_id}
+              disabled={!selectedProfessionalId}
             >
               <SelectTrigger>
-                <SelectValue placeholder="Selecione o serviço" />
+                <SelectValue 
+                  placeholder={
+                    selectedProfessionalId 
+                      ? "Selecione o serviço" 
+                      : "Selecione um profissional primeiro"
+                  } 
+                />
               </SelectTrigger>
               <SelectContent>
-                {services?.map((service) => (
+                {availableServices?.map((service) => (
                   <SelectItem key={service.id} value={service.id}>
                     {service.name} - {service.duration}min
                   </SelectItem>
