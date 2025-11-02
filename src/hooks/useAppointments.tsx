@@ -6,7 +6,6 @@ export interface Appointment {
   id: string;
   client_id: string;
   professional_id: string;
-  service_id: string;
   appointment_date: string;
   appointment_time: string;
   status: string;
@@ -92,10 +91,10 @@ export const useAppointments = (startDate?: string, endDate?: string) => {
       
       const { data, error } = await supabase
         .from("appointments")
-        .insert({
+        .insert([{
           ...appointmentData,
           status: "scheduled",
-        })
+        }] as any)
         .select()
         .single();
 

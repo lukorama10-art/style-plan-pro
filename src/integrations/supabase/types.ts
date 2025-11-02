@@ -59,7 +59,6 @@ export type Database = {
           id: string
           notes: string | null
           professional_id: string
-          service_id: string
           status: string | null
           updated_at: string
         }
@@ -71,7 +70,6 @@ export type Database = {
           id?: string
           notes?: string | null
           professional_id: string
-          service_id: string
           status?: string | null
           updated_at?: string
         }
@@ -83,7 +81,6 @@ export type Database = {
           id?: string
           notes?: string | null
           professional_id?: string
-          service_id?: string
           status?: string | null
           updated_at?: string
         }
@@ -100,13 +97,6 @@ export type Database = {
             columns: ["professional_id"]
             isOneToOne: false
             referencedRelation: "professionals"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "appointments_service_id_fkey"
-            columns: ["service_id"]
-            isOneToOne: false
-            referencedRelation: "services"
             referencedColumns: ["id"]
           },
         ]
