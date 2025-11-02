@@ -76,6 +76,14 @@ const Agenda = () => {
     return appointments?.filter((apt) => apt.appointment_date === dateStr) || [];
   };
 
+  const calculateEndTime = (startTime: string, services: { duration: number }[] = []) => {
+    const [hours, minutes] = startTime.split(':').map(Number);
+    const totalMinutes = services.reduce((acc, s) => acc + s.duration, 0);
+    const endDate = new Date();
+    endDate.setHours(hours, minutes + totalMinutes);
+    return format(endDate, 'HH:mm');
+  };
+
   const previousWeek = () => setCurrentWeek(subWeeks(currentWeek, 1));
   const nextWeek = () => setCurrentWeek(addWeeks(currentWeek, 1));
 
@@ -109,72 +117,73 @@ const Agenda = () => {
           </Button>
         </div>
 
-        <div className="border rounded-lg overflow-hidden">
-          <div className="grid grid-cols-7 bg-muted">
-            {weekDays.map((day) => {
-              const isToday = format(day, "yyyy-MM-dd") === format(new Date(), "yyyy-MM-dd");
-              
-              return (
-                <div
-                  key={day.toString()}
-                  className={cn(
-                    "p-4 text-center border-r last:border-r-0",
-                    isToday && "bg-primary/10"
-                  )}
-                >
-                  <div className={cn(
-                    "text-sm font-medium uppercase",
-                    isToday && "text-primary"
-                  )}>
-                    {format(day, "EEE", { locale: ptBR })}
-                  </div>
-                  <div className={cn(
-                    "text-2xl font-bold mt-1",
-                    isToday && "text-primary"
-                  )}>
-                    {format(day, "dd")}
-                  </div>
-                  <div className="text-xs text-muted-foreground">
-                    {format(day, "MMM", { locale: ptBR })}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-
-          <div className="grid grid-cols-7 min-h-[500px]">
-            {weekDays.map((day) => {
-              const dayAppointments = getAppointmentsForDay(day);
-              
-              return (
-                <div
-                  key={day.toString()}
-                  className="border-r last:border-r-0 p-2 space-y-2"
-                >
-                  {dayAppointments.map((apt) => (
-                    <div
-                      key={apt.id}
-                      className="border rounded-md p-2 cursor-pointer hover:bg-accent transition-colors text-left"
-                      onClick={() => handleEdit(apt)}
+        <div className="border rounded-lg overflow-auto">
+          <table className="w-full border-collapse">
+            <thead>
+              <tr>
+                {weekDays.map((day) => {
+                  const isToday = format(day, "yyyy-MM-dd") === format(new Date(), "yyyy-MM-dd");
+                  
+                  return (
+                    <th
+                      key={day.toString()}
+                      className={cn(
+                        "border-r last:border-r-0 p-4 text-left min-w-[200px]",
+                        isToday && "bg-primary/10"
+                      )}
                     >
-                      <div className="font-semibold text-sm mb-1">
-                        {apt.appointment_time.slice(0, 5)}
+                      <div className={cn(
+                        "font-semibold",
+                        isToday && "text-primary"
+                      )}>
+                        {format(day, "EEEE", { locale: ptBR })}
                       </div>
-                      <div className="text-xs space-y-0.5">
-                        <p className="font-medium truncate">{apt.client?.name}</p>
-                        <p className="text-muted-foreground truncate">
-                          {apt.services?.map((s) => s.name).join(", ")}
-                        </p>
-                        <p className="text-muted-foreground truncate">
-                          {apt.professional?.full_name}
-                        </p>
+                      <div className={cn(
+                        "text-sm text-muted-foreground",
+                        isToday && "text-primary"
+                      )}>
+                        {format(day, "dd 'de' MMM", { locale: ptBR })}
                       </div>
-                    </div>
-                  ))}
-                </div>
-              );
-            })}
-          </div>
+                    </th>
+                  );
+                })}
+              </tr>
+            </thead>
+            <tbody>
+              <tr className="align-top">
+                {weekDays.map((day) => {
+                  const dayAppointments = getAppointmentsForDay(day);
+                  
+                  return (
+                    <td
+                      key={day.toString()}
+                      className="border-r last:border-r-0 p-2 min-h-[500px]"
+                    >
+                      <div className="space-y-2">
+                        {dayAppointments.map((apt) => (
+                          <div
+                            key={apt.id}
+                            className="border rounded-md p-3 cursor-pointer hover:bg-accent transition-colors"
+                            onClick={() => handleEdit(apt)}
+                          >
+                            <div className="font-semibold text-sm mb-2">
+                              {apt.appointment_time.slice(0, 5)} - {calculateEndTime(apt.appointment_time, apt.services)}
+                            </div>
+                            <div className="text-sm mb-1">
+                              {apt.client?.name} - {apt.services?.map((s) => s.name).join(", ")}
+                            </div>
+                            <div className="text-sm text-muted-foreground">
+                              {apt.professional?.full_name}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </td>
+                  );
+                })}
+              </tr>
+            </tbody>
+          </table>
         </div>
 
         <AppointmentDialog
