@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import {
   Dialog,
@@ -17,6 +17,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useClients } from "@/hooks/useClients";
 import { useServices } from "@/hooks/useServices";
 import { useProfessionals } from "@/hooks/useProfessionals";
@@ -48,7 +49,7 @@ export function AppointmentDialog({
   const { services } = useServices();
   const { professionals } = useProfessionals();
 
-  const selectedServiceId = watch("service_id");
+  const [selectedServiceIds, setSelectedServiceIds] = useState<string[]>([]);
   const selectedProfessionalId = watch("professional_id");
   const selectedDate = watch("appointment_date");
 
@@ -62,25 +63,37 @@ export function AppointmentDialog({
       })
     : services;
 
+  const totalDuration = selectedServiceIds.reduce((acc, serviceId) => {
+    const service = services?.find((s) => s.id === serviceId);
+    return acc + (service?.duration || 0);
+  }, 0);
+
   useEffect(() => {
     if (appointment) {
       setValue("client_id", appointment.client_id);
       setValue("professional_id", appointment.professional_id);
-      setValue("service_id", appointment.service_id);
+      setSelectedServiceIds(appointment.services?.map((s) => s.id) || []);
       setValue("appointment_date", appointment.appointment_date);
       setValue("appointment_time", appointment.appointment_time);
       setValue("notes", appointment.notes || "");
     } else {
       reset();
+      setSelectedServiceIds([]);
     }
   }, [appointment, setValue, reset]);
 
-  const selectedService = services?.find((s) => s.id === selectedServiceId);
-  const totalDuration = selectedService?.duration || 0;
-
   const handleFormSubmit = async (data: any) => {
-    await onSubmit(data);
+    await onSubmit({ ...data, service_ids: selectedServiceIds });
     reset();
+    setSelectedServiceIds([]);
+  };
+
+  const toggleService = (serviceId: string) => {
+    setSelectedServiceIds((prev) =>
+      prev.includes(serviceId)
+        ? prev.filter((id) => id !== serviceId)
+        : [...prev, serviceId]
+    );
   };
 
   return (
@@ -134,29 +147,30 @@ export function AppointmentDialog({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="service_id">Serviço *</Label>
-            <Select
-              onValueChange={(value) => setValue("service_id", value)}
-              defaultValue={appointment?.service_id}
-              disabled={!selectedProfessionalId}
-            >
-              <SelectTrigger>
-                <SelectValue 
-                  placeholder={
-                    selectedProfessionalId 
-                      ? "Selecione o serviço" 
-                      : "Selecione um profissional primeiro"
-                  } 
-                />
-              </SelectTrigger>
-              <SelectContent>
+            <Label>Serviços *</Label>
+            {!selectedProfessionalId ? (
+              <p className="text-sm text-muted-foreground">
+                Selecione um profissional primeiro
+              </p>
+            ) : (
+              <div className="border rounded-md p-3 max-h-48 overflow-y-auto space-y-2">
                 {availableServices?.map((service) => (
-                  <SelectItem key={service.id} value={service.id}>
-                    {service.name} - {service.duration}min
-                  </SelectItem>
+                  <div key={service.id} className="flex items-center space-x-2">
+                    <Checkbox
+                      id={service.id}
+                      checked={selectedServiceIds.includes(service.id)}
+                      onCheckedChange={() => toggleService(service.id)}
+                    />
+                    <Label
+                      htmlFor={service.id}
+                      className="font-normal cursor-pointer flex-1"
+                    >
+                      {service.name} - {service.duration}min
+                    </Label>
+                  </div>
                 ))}
-              </SelectContent>
-            </Select>
+              </div>
+            )}
             {totalDuration > 0 && (
               <p className="text-sm text-muted-foreground">
                 Duração total: {totalDuration} minutos

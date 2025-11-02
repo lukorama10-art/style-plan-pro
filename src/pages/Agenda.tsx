@@ -151,7 +151,7 @@ const Agenda = () => {
                         {apt.client?.name}
                       </div>
                       <div className="text-xs text-muted-foreground">
-                        {apt.service?.name}
+                        {apt.services?.map((s) => s.name).join(", ")}
                       </div>
                       <div className="text-xs text-muted-foreground">
                         {apt.professional?.full_name}
