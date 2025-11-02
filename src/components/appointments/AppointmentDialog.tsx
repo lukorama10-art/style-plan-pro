@@ -214,13 +214,12 @@ export function AppointmentDialog({
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="appointment_time">Horário *</Label>
+              <Label htmlFor="appointment_time">Horário (24h) *</Label>
               <Input
                 id="appointment_time"
                 type="time"
-                step="60"
                 {...register("appointment_time", { required: true })}
-                className="block"
+                placeholder="14:30"
               />
             </div>
           </div>
