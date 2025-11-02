@@ -7,7 +7,6 @@ import {
   Users,
   DollarSign,
   BarChart3,
-  Clock,
   Settings,
   LogOut,
 } from "lucide-react";
@@ -39,7 +38,6 @@ const menuItems = [
   { title: "Profissionais", icon: Users, path: "/profissionais" },
   { title: "Financeiro", icon: DollarSign, path: "/financeiro" },
   { title: "Relatórios", icon: BarChart3, path: "/relatorios" },
-  { title: "Disponibilidade", icon: Clock, path: "/disponibilidade" },
   { title: "Configurações", icon: Settings, path: "/configuracoes" },
 ];
 
