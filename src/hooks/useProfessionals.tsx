@@ -92,10 +92,14 @@ export const useProfessionals = (searchTerm?: string) => {
 
   const createProfessional = useMutation({
     mutationFn: async (professional: ProfessionalInput) => {
+      // Gerar UUID para o novo perfil
+      const newId = crypto.randomUUID();
+      
       // Criar profile
       const { data: profile, error: profileError } = await supabase
         .from("profiles")
         .insert({
+          id: newId,
           full_name: professional.full_name,
           phone: professional.phone,
           role: "professional",
