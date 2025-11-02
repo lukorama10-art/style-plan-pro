@@ -8,7 +8,7 @@ export interface Professional {
   phone?: string;
   email?: string;
   avatar_url?: string;
-  role: string;
+  active?: boolean;
   created_at: string;
   services?: string[]; // IDs dos serviços
   availability?: Availability[];
@@ -34,9 +34,8 @@ export const useProfessionals = (searchTerm?: string) => {
     queryKey: ["professionals", searchTerm],
     queryFn: async () => {
       let query = supabase
-        .from("profiles")
+        .from("professionals")
         .select("*")
-        .eq("role", "professional")
         .order("created_at", { ascending: false });
 
       if (searchTerm) {
@@ -92,18 +91,13 @@ export const useProfessionals = (searchTerm?: string) => {
 
   const createProfessional = useMutation({
     mutationFn: async (professional: ProfessionalInput) => {
-      // Gerar UUID para o novo perfil
-      const newId = crypto.randomUUID();
-      
-      // Criar profile
+      // Criar professional
       const { data: profile, error: profileError } = await supabase
-        .from("profiles")
+        .from("professionals")
         .insert({
-          id: newId,
           full_name: professional.full_name,
           phone: professional.phone,
-          role: "professional",
-        } as any)
+        })
         .select()
         .single();
 
@@ -158,9 +152,9 @@ export const useProfessionals = (searchTerm?: string) => {
       id,
       ...professional
     }: ProfessionalInput & { id: string }) => {
-      // Atualizar profile
+      // Atualizar professional
       const { error: profileError } = await supabase
-        .from("profiles")
+        .from("professionals")
         .update({
           full_name: professional.full_name,
           phone: professional.phone,
@@ -220,7 +214,7 @@ export const useProfessionals = (searchTerm?: string) => {
 
   const deleteProfessional = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from("profiles").delete().eq("id", id);
+      const { error } = await supabase.from("professionals").delete().eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {

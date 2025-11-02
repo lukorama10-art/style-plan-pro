@@ -63,7 +63,7 @@ export type Database = {
             foreignKeyName: "appointments_professional_id_fkey"
             columns: ["professional_id"]
             isOneToOne: false
-            referencedRelation: "profiles"
+            referencedRelation: "professionals"
             referencedColumns: ["id"]
           },
           {
@@ -108,7 +108,7 @@ export type Database = {
             foreignKeyName: "availability_professional_id_fkey"
             columns: ["professional_id"]
             isOneToOne: false
-            referencedRelation: "profiles"
+            referencedRelation: "professionals"
             referencedColumns: ["id"]
           },
         ]
@@ -167,7 +167,7 @@ export type Database = {
             foreignKeyName: "professional_services_professional_id_fkey"
             columns: ["professional_id"]
             isOneToOne: false
-            referencedRelation: "profiles"
+            referencedRelation: "professionals"
             referencedColumns: ["id"]
           },
           {
@@ -178,6 +178,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      professionals: {
+        Row: {
+          active: boolean | null
+          avatar_url: string | null
+          created_at: string
+          email: string | null
+          full_name: string
+          id: string
+          phone: string | null
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean | null
+          avatar_url?: string | null
+          created_at?: string
+          email?: string | null
+          full_name: string
+          id?: string
+          phone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean | null
+          avatar_url?: string | null
+          created_at?: string
+          email?: string | null
+          full_name?: string
+          id?: string
+          phone?: string | null
+          updated_at?: string
+        }
+        Relationships: []
       }
       profiles: {
         Row: {
