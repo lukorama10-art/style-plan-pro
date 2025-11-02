@@ -119,69 +119,50 @@ const Agenda = () => {
 
         <div className="border rounded-lg overflow-auto">
           <table className="w-full border-collapse">
-            <thead>
-              <tr>
-                {weekDays.map((day) => {
-                  const isToday = format(day, "yyyy-MM-dd") === format(new Date(), "yyyy-MM-dd");
-                  
-                  return (
-                    <th
-                      key={day.toString()}
+            <tbody>
+              {weekDays.map((day) => {
+                const dayAppointments = getAppointmentsForDay(day);
+                const isToday = format(day, "yyyy-MM-dd") === format(new Date(), "yyyy-MM-dd");
+                
+                return (
+                  <tr key={day.toString()} className="border-b last:border-b-0">
+                    <td
                       className={cn(
-                        "border-r last:border-r-0 p-4 text-left min-w-[200px]",
-                        isToday && "bg-primary/10"
+                        "border-r p-4 align-top min-w-[150px] font-medium",
+                        isToday && "bg-primary/10 text-primary"
                       )}
                     >
-                      <div className={cn(
-                        "font-semibold",
-                        isToday && "text-primary"
-                      )}>
-                        {format(day, "EEEE", { locale: ptBR })}
-                      </div>
-                      <div className={cn(
-                        "text-sm text-muted-foreground",
-                        isToday && "text-primary"
-                      )}>
+                      <div>{format(day, "EEEE", { locale: ptBR })}</div>
+                      <div className="text-sm text-muted-foreground">
                         {format(day, "dd 'de' MMM", { locale: ptBR })}
                       </div>
-                    </th>
-                  );
-                })}
-              </tr>
-            </thead>
-            <tbody>
-              <tr className="align-top">
-                {weekDays.map((day) => {
-                  const dayAppointments = getAppointmentsForDay(day);
-                  
-                  return (
-                    <td
-                      key={day.toString()}
-                      className="border-r last:border-r-0 p-2 min-h-[500px]"
-                    >
-                      <div className="space-y-2">
-                        {dayAppointments.map((apt) => (
-                          <div
-                            key={apt.id}
-                            className="border rounded-md p-3 cursor-pointer hover:bg-accent transition-colors"
-                            onClick={() => handleEdit(apt)}
-                          >
-                            <div className="font-semibold text-sm mb-2">
-                              {apt.appointment_time.slice(0, 5)} - {calculateEndTime(apt.appointment_time, apt.services)}
-                            </div>
-                            <div className="text-sm mb-1">
-                              {apt.client?.name} - {apt.services?.map((s) => s.name).join(", ")}
-                            </div>
-                            <div className="text-sm text-muted-foreground">
-                              {apt.professional?.full_name}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
                     </td>
-                  );
-                })}
-              </tr>
+                    {dayAppointments.length > 0 ? (
+                      dayAppointments.map((apt) => (
+                        <td
+                          key={apt.id}
+                          className="border-r last:border-r-0 p-3 align-top min-w-[200px] cursor-pointer hover:bg-accent transition-colors"
+                          onClick={() => handleEdit(apt)}
+                        >
+                          <div className="font-semibold text-sm mb-2">
+                            {apt.appointment_time.slice(0, 5)} - {calculateEndTime(apt.appointment_time, apt.services)}
+                          </div>
+                          <div className="text-sm mb-1">
+                            {apt.client?.name} - {apt.services?.map((s) => s.name).join(", ")}
+                          </div>
+                          <div className="text-sm text-muted-foreground">
+                            {apt.professional?.full_name}
+                          </div>
+                        </td>
+                      ))
+                    ) : (
+                      <td className="p-3 text-sm text-muted-foreground italic">
+                        Nenhum agendamento
+                      </td>
+                    )}
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
