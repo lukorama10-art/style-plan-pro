@@ -26,6 +26,7 @@ import ClientDialog from "@/components/clients/ClientDialog";
 import { Plus, Search, Pencil, Trash2, Loader2 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { formatPhoneNumber } from "@/utils/phoneFormatter";
 
 const Clients = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -125,7 +126,7 @@ const Clients = () => {
                         <TableCell className="font-medium">
                           {client.name}
                         </TableCell>
-                        <TableCell>{client.phone}</TableCell>
+                        <TableCell>{formatPhoneNumber(client.phone)}</TableCell>
                         <TableCell>{client.email || "-"}</TableCell>
                         <TableCell className="text-muted-foreground">
                           {formatDistanceToNow(new Date(client.created_at), {

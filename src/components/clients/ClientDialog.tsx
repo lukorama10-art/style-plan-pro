@@ -13,6 +13,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Client, ClientInput } from "@/hooks/useClients";
 import { Loader2 } from "lucide-react";
+import { formatPhoneNumber, unformatPhoneNumber, validatePhoneNumber } from "@/utils/phoneFormatter";
+import { toast } from "sonner";
 
 interface ClientDialogProps {
   open: boolean;
@@ -41,7 +43,7 @@ const ClientDialog = ({
       setFormData({
         name: client.name,
         email: client.email || "",
-        phone: client.phone,
+        phone: formatPhoneNumber(client.phone),
         notes: client.notes || "",
       });
     } else {
@@ -57,11 +59,28 @@ const ClientDialog = ({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (client) {
-      onSave({ ...formData, id: client.id });
-    } else {
-      onSave(formData);
+    // Valida o telefone antes de salvar
+    if (!validatePhoneNumber(formData.phone)) {
+      toast.error("Telefone inválido. Use o formato (XX) XXXXX-XXXX");
+      return;
     }
+    
+    // Remove a formatação do telefone antes de salvar
+    const dataToSave = {
+      ...formData,
+      phone: unformatPhoneNumber(formData.phone),
+    };
+    
+    if (client) {
+      onSave({ ...dataToSave, id: client.id });
+    } else {
+      onSave(dataToSave);
+    }
+  };
+
+  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const formatted = formatPhoneNumber(e.target.value);
+    setFormData({ ...formData, phone: formatted });
   };
 
   return (
@@ -97,13 +116,15 @@ const ClientDialog = ({
                 id="phone"
                 type="tel"
                 value={formData.phone}
-                onChange={(e) =>
-                  setFormData({ ...formData, phone: e.target.value })
-                }
+                onChange={handlePhoneChange}
                 placeholder="(00) 00000-0000"
                 required
                 disabled={isSaving}
+                maxLength={15}
               />
+              <p className="text-xs text-muted-foreground">
+                Digite apenas números, a formatação é automática
+              </p>
             </div>
             <div className="grid gap-2">
               <Label htmlFor="email">Email</Label>
