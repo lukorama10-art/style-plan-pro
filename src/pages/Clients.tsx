@@ -24,8 +24,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useClients, Client } from "@/hooks/useClients";
 import ClientDialog from "@/components/clients/ClientDialog";
 import { Plus, Search, Pencil, Trash2, Loader2 } from "lucide-react";
-import { formatDistanceToNow } from "date-fns";
-import { ptBR } from "date-fns/locale";
 import { formatPhoneNumber } from "@/utils/phoneFormatter";
 
 const Clients = () => {
@@ -116,7 +114,7 @@ const Clients = () => {
                       <TableHead>Nome</TableHead>
                       <TableHead>Telefone</TableHead>
                       <TableHead>Email</TableHead>
-                      <TableHead>Cadastrado</TableHead>
+                      <TableHead>Observações</TableHead>
                       <TableHead className="text-right">Ações</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -129,10 +127,7 @@ const Clients = () => {
                         <TableCell>{formatPhoneNumber(client.phone)}</TableCell>
                         <TableCell>{client.email || "-"}</TableCell>
                         <TableCell className="text-muted-foreground">
-                          {formatDistanceToNow(new Date(client.created_at), {
-                            addSuffix: true,
-                            locale: ptBR,
-                          })}
+                          {client.notes || "-"}
                         </TableCell>
                         <TableCell className="text-right">
                           <div className="flex justify-end gap-2">
