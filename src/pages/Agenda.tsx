@@ -109,59 +109,72 @@ const Agenda = () => {
           </Button>
         </div>
 
-        <div className="grid grid-cols-7 gap-4">
-          {weekDays.map((day) => {
-            const dayAppointments = getAppointmentsForDay(day);
-            const isToday = format(day, "yyyy-MM-dd") === format(new Date(), "yyyy-MM-dd");
-
-            return (
-              <Card
-                key={day.toString()}
-                className={cn(
-                  "p-4 min-h-[400px]",
-                  isToday && "border-primary"
-                )}
-              >
-                <div className="mb-4">
+        <div className="border rounded-lg overflow-hidden">
+          <div className="grid grid-cols-7 bg-muted">
+            {weekDays.map((day) => {
+              const isToday = format(day, "yyyy-MM-dd") === format(new Date(), "yyyy-MM-dd");
+              
+              return (
+                <div
+                  key={day.toString()}
+                  className={cn(
+                    "p-4 text-center border-r last:border-r-0",
+                    isToday && "bg-primary/10"
+                  )}
+                >
                   <div className={cn(
-                    "text-sm font-medium",
+                    "text-sm font-medium uppercase",
                     isToday && "text-primary"
                   )}>
                     {format(day, "EEE", { locale: ptBR })}
                   </div>
                   <div className={cn(
-                    "text-2xl font-bold",
+                    "text-2xl font-bold mt-1",
                     isToday && "text-primary"
                   )}>
                     {format(day, "dd")}
                   </div>
+                  <div className="text-xs text-muted-foreground">
+                    {format(day, "MMM", { locale: ptBR })}
+                  </div>
                 </div>
+              );
+            })}
+          </div>
 
-                <div className="space-y-2">
+          <div className="grid grid-cols-7 min-h-[500px]">
+            {weekDays.map((day) => {
+              const dayAppointments = getAppointmentsForDay(day);
+              
+              return (
+                <div
+                  key={day.toString()}
+                  className="border-r last:border-r-0 p-2 space-y-2"
+                >
                   {dayAppointments.map((apt) => (
-                    <Card
+                    <div
                       key={apt.id}
-                      className="p-3 cursor-pointer hover:bg-accent transition-colors"
+                      className="border rounded-md p-2 cursor-pointer hover:bg-accent transition-colors text-left"
                       onClick={() => handleEdit(apt)}
                     >
-                      <div className="text-sm font-medium">
+                      <div className="font-semibold text-sm mb-1">
                         {apt.appointment_time.slice(0, 5)}
                       </div>
-                      <div className="text-xs text-muted-foreground">
-                        {apt.client?.name}
+                      <div className="text-xs space-y-0.5">
+                        <p className="font-medium truncate">{apt.client?.name}</p>
+                        <p className="text-muted-foreground truncate">
+                          {apt.services?.map((s) => s.name).join(", ")}
+                        </p>
+                        <p className="text-muted-foreground truncate">
+                          {apt.professional?.full_name}
+                        </p>
                       </div>
-                      <div className="text-xs text-muted-foreground">
-                        {apt.services?.map((s) => s.name).join(", ")}
-                      </div>
-                      <div className="text-xs text-muted-foreground">
-                        {apt.professional?.full_name}
-                      </div>
-                    </Card>
+                    </div>
                   ))}
                 </div>
-              </Card>
-            );
-          })}
+              );
+            })}
+          </div>
         </div>
 
         <AppointmentDialog
