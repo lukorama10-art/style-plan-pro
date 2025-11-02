@@ -6,7 +6,7 @@ import { useAppointments, Appointment } from "@/hooks/useAppointments";
 import { AppointmentDialog } from "@/components/appointments/AppointmentDialog";
 import { format, startOfWeek, addDays, addWeeks, subWeeks } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Card } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -125,42 +125,48 @@ const Agenda = () => {
                 const isToday = format(day, "yyyy-MM-dd") === format(new Date(), "yyyy-MM-dd");
                 
                 return (
-                  <tr key={day.toString()} className="border-b last:border-b-0">
-                    <td
-                      className={cn(
-                        "border-r p-4 align-top min-w-[150px] font-medium",
-                        isToday && "bg-primary/10 text-primary"
-                      )}
-                    >
-                      <div>{format(day, "EEEE", { locale: ptBR })}</div>
-                      <div className="text-sm text-muted-foreground">
-                        {format(day, "dd 'de' MMM", { locale: ptBR })}
-                      </div>
-                    </td>
+                  <>
+                    <tr key={`day-${day.toString()}`} className="border-b">
+                      <td
+                        className={cn(
+                          "p-4 font-semibold",
+                          isToday && "bg-primary/10 text-primary"
+                        )}
+                      >
+                        <div>{format(day, "EEEE", { locale: ptBR })}</div>
+                        <div className="text-sm font-normal text-muted-foreground">
+                          {format(day, "dd 'de' MMM", { locale: ptBR })}
+                        </div>
+                      </td>
+                    </tr>
                     {dayAppointments.length > 0 ? (
                       dayAppointments.map((apt) => (
-                        <td
+                        <tr
                           key={apt.id}
-                          className="border-r last:border-r-0 p-3 align-top min-w-[200px] cursor-pointer hover:bg-accent transition-colors"
+                          className="border-b last:border-b-0 cursor-pointer hover:bg-accent transition-colors"
                           onClick={() => handleEdit(apt)}
                         >
-                          <div className="font-semibold text-sm mb-2">
-                            {apt.appointment_time.slice(0, 5)} - {calculateEndTime(apt.appointment_time, apt.services)}
-                          </div>
-                          <div className="text-sm mb-1">
-                            {apt.client?.name} - {apt.services?.map((s) => s.name).join(", ")}
-                          </div>
-                          <div className="text-sm text-muted-foreground">
-                            {apt.professional?.full_name}
-                          </div>
-                        </td>
+                          <td className="p-4">
+                            <div className="font-semibold text-sm mb-2">
+                              {apt.appointment_time.slice(0, 5)} - {calculateEndTime(apt.appointment_time, apt.services)}
+                            </div>
+                            <div className="text-sm mb-1">
+                              {apt.client?.name} - {apt.services?.map((s) => s.name).join(", ")}
+                            </div>
+                            <div className="text-sm text-muted-foreground">
+                              {apt.professional?.full_name}
+                            </div>
+                          </td>
+                        </tr>
                       ))
                     ) : (
-                      <td className="p-3 text-sm text-muted-foreground italic">
-                        Nenhum agendamento
-                      </td>
+                      <tr className="border-b">
+                        <td className="p-4 text-sm text-muted-foreground italic">
+                          Nenhum agendamento
+                        </td>
+                      </tr>
                     )}
-                  </tr>
+                  </>
                 );
               })}
             </tbody>
@@ -199,8 +205,5 @@ const Agenda = () => {
     </Layout>
   );
 };
-
-const cn = (...classes: (string | boolean | undefined)[]) =>
-  classes.filter(Boolean).join(" ");
 
 export default Agenda;
