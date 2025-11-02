@@ -217,10 +217,28 @@ export function AppointmentDialog({
               <Label htmlFor="appointment_time">Horário (24h) *</Label>
               <Input
                 id="appointment_time"
-                type="time"
-                {...register("appointment_time", { required: true })}
+                type="text"
                 placeholder="14:30"
+                maxLength={5}
+                {...register("appointment_time", { 
+                  required: true,
+                  pattern: {
+                    value: /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/,
+                    message: "Formato inválido. Use HH:MM (ex: 14:30)"
+                  }
+                })}
+                onInput={(e) => {
+                  let value = e.currentTarget.value.replace(/[^\d:]/g, '');
+                  
+                  // Auto-format as user types
+                  if (value.length === 2 && !value.includes(':')) {
+                    value = value + ':';
+                  }
+                  
+                  e.currentTarget.value = value;
+                }}
               />
+              <p className="text-xs text-muted-foreground">Formato: HH:MM (ex: 14:30)</p>
             </div>
           </div>
 
