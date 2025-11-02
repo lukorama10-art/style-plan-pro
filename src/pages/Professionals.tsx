@@ -91,16 +91,27 @@ const Professionals = () => {
       .join(", ");
   };
 
-  const getAvailabilityText = (professional: Professional) => {
+  const renderAvailability = (professional: Professional) => {
     if (!professional.availability || professional.availability.length === 0) {
-      return "Não definida";
+      return <span className="text-muted-foreground">Não definida</span>;
     }
 
-    const days = professional.availability
-      .map((a) => DAYS_MAP[a.day_of_week])
-      .join(", ");
-
-    return days;
+    return (
+      <div className="flex gap-3 flex-wrap">
+        {professional.availability.map((avail) => {
+          const periods = avail.periods
+            .map((p) => (p === "morning" ? "M" : "T"))
+            .join("/");
+          
+          return (
+            <div key={avail.day_of_week} className="flex flex-col items-center">
+              <span className="text-sm font-medium">{DAYS_MAP[avail.day_of_week]}</span>
+              <span className="text-xs text-muted-foreground">{periods}</span>
+            </div>
+          );
+        })}
+      </div>
+    );
   };
 
   return (
@@ -169,7 +180,7 @@ const Professionals = () => {
                         {getServiceNames(professional.services || [])}
                       </TableCell>
                       <TableCell>
-                        {getAvailabilityText(professional)}
+                        {renderAvailability(professional)}
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
