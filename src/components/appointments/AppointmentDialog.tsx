@@ -218,7 +218,9 @@ export function AppointmentDialog({
               <Input
                 id="appointment_time"
                 type="time"
+                step="60"
                 {...register("appointment_time", { required: true })}
+                className="block"
               />
             </div>
           </div>
