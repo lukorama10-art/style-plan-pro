@@ -85,6 +85,10 @@ const Agenda = () => {
     return format(endDate, 'HH:mm');
   };
 
+  const handleDeleteFromDialog = (id: string) => {
+    deleteAppointment.mutateAsync(id);
+  };
+
   const previousWeek = () => setCurrentWeek(subWeeks(currentWeek, 1));
   const nextWeek = () => setCurrentWeek(addWeeks(currentWeek, 1));
 
@@ -186,6 +190,7 @@ const Agenda = () => {
           open={dialogOpen}
           onOpenChange={setDialogOpen}
           onSubmit={handleSubmit}
+          onDelete={handleDeleteFromDialog}
           appointment={selectedAppointment || undefined}
           isLoading={createAppointment.isPending || updateAppointment.isPending}
         />

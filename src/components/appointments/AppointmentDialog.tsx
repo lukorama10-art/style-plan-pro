@@ -24,15 +24,26 @@ import { useProfessionals } from "@/hooks/useProfessionals";
 import { Appointment } from "@/hooks/useAppointments";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { CalendarIcon } from "lucide-react";
+import { CalendarIcon, Trash2 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface AppointmentDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSubmit: (data: any) => Promise<void>;
+  onDelete?: (id: string) => void;
   appointment?: Appointment;
   isLoading: boolean;
 }
@@ -41,6 +52,7 @@ export function AppointmentDialog({
   open,
   onOpenChange,
   onSubmit,
+  onDelete,
   appointment,
   isLoading,
 }: AppointmentDialogProps) {
@@ -50,6 +62,7 @@ export function AppointmentDialog({
   const { professionals } = useProfessionals();
 
   const [selectedServiceIds, setSelectedServiceIds] = useState<string[]>([]);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const selectedProfessionalId = watch("professional_id");
   const selectedDate = watch("appointment_date");
 
@@ -96,7 +109,32 @@ export function AppointmentDialog({
     );
   };
 
+  const handleDelete = () => {
+    if (appointment && onDelete) {
+      onDelete(appointment.id);
+      setShowDeleteConfirm(false);
+      onOpenChange(false);
+    }
+  };
+
   return (
+    <>
+      <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja excluir este agendamento? Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
@@ -251,20 +289,34 @@ export function AppointmentDialog({
             />
           </div>
 
-          <div className="flex justify-end gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => onOpenChange(false)}
-            >
-              Cancelar
-            </Button>
-            <Button type="submit" disabled={isLoading}>
-              {appointment ? "Atualizar" : "Agendar"}
-            </Button>
+          <div className="flex justify-between gap-2">
+            {appointment && onDelete && (
+              <Button
+                type="button"
+                variant="destructive"
+                onClick={() => setShowDeleteConfirm(true)}
+                disabled={isLoading}
+              >
+                <Trash2 className="w-4 h-4 mr-2" />
+                Excluir
+              </Button>
+            )}
+            <div className="flex gap-2 ml-auto">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => onOpenChange(false)}
+              >
+                Cancelar
+              </Button>
+              <Button type="submit" disabled={isLoading}>
+                {appointment ? "Atualizar" : "Agendar"}
+              </Button>
+            </div>
           </div>
         </form>
       </DialogContent>
     </Dialog>
+    </>
   );
 }
