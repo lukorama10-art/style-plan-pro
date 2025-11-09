@@ -8,6 +8,7 @@ import Clients from "./pages/Clients";
 import Services from "./pages/Services";
 import Professionals from "./pages/Professionals";
 import Agenda from "./pages/Agenda";
+import Financeiro from "./pages/Financeiro";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -59,6 +60,14 @@ const App = () => (
             element={
               <ProtectedRoute>
                 <Agenda />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/financeiro"
+            element={
+              <ProtectedRoute>
+                <Financeiro />
               </ProtectedRoute>
             }
           />
