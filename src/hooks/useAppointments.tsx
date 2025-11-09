@@ -85,10 +85,112 @@ export const useAppointments = (startDate?: string, endDate?: string) => {
     },
   });
 
+  // Function to check for scheduling conflicts
+  const checkTimeConflict = async (
+    professionalId: string,
+    date: string,
+    startTime: string,
+    durationMinutes: number,
+    excludeAppointmentId?: string
+  ): Promise<{ hasConflict: boolean; conflictingAppointment?: any }> => {
+    // Get all appointments for this professional on this date
+    const { data: existingAppointments, error } = await supabase
+      .from("appointments")
+      .select(`
+        *,
+        client:clients(name)
+      `)
+      .eq("professional_id", professionalId)
+      .eq("appointment_date", date)
+      .neq("status", "cancelled");
+
+    if (error) throw error;
+
+    // Calculate end time for the new appointment
+    const [startHours, startMinutes] = startTime.split(":").map(Number);
+    const newStartMinutes = startHours * 60 + startMinutes;
+    const newEndMinutes = newStartMinutes + durationMinutes;
+
+    // Check each existing appointment for conflicts
+    for (const existing of existingAppointments || []) {
+      // Skip if this is the appointment being edited
+      if (excludeAppointmentId && existing.id === excludeAppointmentId) {
+        continue;
+      }
+
+      // Get services duration for existing appointment
+      const { data: existingServices } = await supabase
+        .from("appointment_services")
+        .select(`
+          service:services(duration)
+        `)
+        .eq("appointment_id", existing.id);
+
+      const existingDuration = existingServices?.reduce(
+        (total: number, item: any) => total + (item.service?.duration || 0),
+        0
+      ) || 0;
+
+      // Calculate existing appointment time range
+      const [existingHours, existingMinutes] = existing.appointment_time.split(":").map(Number);
+      const existingStartMinutes = existingHours * 60 + existingMinutes;
+      const existingEndMinutes = existingStartMinutes + existingDuration;
+
+      // Check for overlap
+      const hasOverlap = 
+        (newStartMinutes >= existingStartMinutes && newStartMinutes < existingEndMinutes) ||
+        (newEndMinutes > existingStartMinutes && newEndMinutes <= existingEndMinutes) ||
+        (newStartMinutes <= existingStartMinutes && newEndMinutes >= existingEndMinutes);
+
+      if (hasOverlap) {
+        return { 
+          hasConflict: true, 
+          conflictingAppointment: {
+            ...existing,
+            duration: existingDuration
+          }
+        };
+      }
+    }
+
+    return { hasConflict: false };
+  };
+
   const createAppointment = useMutation({
     mutationFn: async (appointment: AppointmentInput) => {
       const { service_ids, ...appointmentData } = appointment;
       
+      // Get total duration of selected services
+      const { data: servicesData } = await supabase
+        .from("services")
+        .select("duration")
+        .in("id", service_ids);
+
+      const totalDuration = servicesData?.reduce(
+        (total, service) => total + service.duration,
+        0
+      ) || 0;
+
+      // Check for conflicts
+      const conflictCheck = await checkTimeConflict(
+        appointmentData.professional_id,
+        appointmentData.appointment_date,
+        appointmentData.appointment_time,
+        totalDuration
+      );
+
+      if (conflictCheck.hasConflict) {
+        const conflict = conflictCheck.conflictingAppointment;
+        const conflictEndTime = new Date(
+          new Date(`2000-01-01T${conflict.appointment_time}`).getTime() + 
+          conflict.duration * 60000
+        ).toTimeString().slice(0, 5);
+
+        throw new Error(
+          `Horário indisponível! Já existe agendamento de ${conflict.client.name} das ${conflict.appointment_time} às ${conflictEndTime}`
+        );
+      }
+
       const { data, error } = await supabase
         .from("appointments")
         .insert([{
@@ -119,7 +221,7 @@ export const useAppointments = (startDate?: string, endDate?: string) => {
       toast.success("Agendamento criado com sucesso!");
     },
     onError: (error: any) => {
-      toast.error("Erro ao criar agendamento: " + error.message);
+      toast.error(error.message || "Erro ao criar agendamento");
     },
   });
 
@@ -127,6 +229,38 @@ export const useAppointments = (startDate?: string, endDate?: string) => {
     mutationFn: async ({ id, ...appointment }: AppointmentInput & { id: string }) => {
       const { service_ids, ...appointmentData } = appointment;
       
+      // Get total duration of selected services
+      const { data: servicesData } = await supabase
+        .from("services")
+        .select("duration")
+        .in("id", service_ids);
+
+      const totalDuration = servicesData?.reduce(
+        (total, service) => total + service.duration,
+        0
+      ) || 0;
+
+      // Check for conflicts (excluding current appointment)
+      const conflictCheck = await checkTimeConflict(
+        appointmentData.professional_id,
+        appointmentData.appointment_date,
+        appointmentData.appointment_time,
+        totalDuration,
+        id
+      );
+
+      if (conflictCheck.hasConflict) {
+        const conflict = conflictCheck.conflictingAppointment;
+        const conflictEndTime = new Date(
+          new Date(`2000-01-01T${conflict.appointment_time}`).getTime() + 
+          conflict.duration * 60000
+        ).toTimeString().slice(0, 5);
+
+        throw new Error(
+          `Horário indisponível! Já existe agendamento de ${conflict.client.name} das ${conflict.appointment_time} às ${conflictEndTime}`
+        );
+      }
+
       const { error } = await supabase
         .from("appointments")
         .update(appointmentData)
@@ -157,7 +291,7 @@ export const useAppointments = (startDate?: string, endDate?: string) => {
       toast.success("Agendamento atualizado com sucesso!");
     },
     onError: (error: any) => {
-      toast.error("Erro ao atualizar agendamento: " + error.message);
+      toast.error(error.message || "Erro ao atualizar agendamento");
     },
   });
 
