@@ -171,7 +171,7 @@ const Agenda = () => {
                     {!isLastDay && (
                       <tr>
                         <td className="p-0">
-                          <div className="border-t-2 border-border my-2" />
+                          <div className="border-t-2 border-black my-2" />
                         </td>
                       </tr>
                     )}
