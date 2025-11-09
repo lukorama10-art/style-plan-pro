@@ -7,6 +7,7 @@ import { AppointmentDialog } from "@/components/appointments/AppointmentDialog";
 import { format, startOfWeek, addDays, addWeeks, subWeeks } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
+import { Separator } from "@/components/ui/separator";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -120,9 +121,10 @@ const Agenda = () => {
         <div className="border rounded-lg overflow-auto">
           <table className="w-full border-collapse">
             <tbody>
-              {weekDays.map((day) => {
+              {weekDays.map((day, dayIndex) => {
                 const dayAppointments = getAppointmentsForDay(day);
                 const isToday = format(day, "yyyy-MM-dd") === format(new Date(), "yyyy-MM-dd");
+                const isLastDay = dayIndex === weekDays.length - 1;
                 
                 return (
                   <>
@@ -163,6 +165,13 @@ const Agenda = () => {
                       <tr className="border-b">
                         <td className="p-4 text-sm text-muted-foreground italic">
                           Nenhum agendamento
+                        </td>
+                      </tr>
+                    )}
+                    {!isLastDay && (
+                      <tr>
+                        <td className="p-0">
+                          <div className="border-t-2 border-border my-2" />
                         </td>
                       </tr>
                     )}
