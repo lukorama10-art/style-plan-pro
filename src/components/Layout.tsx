@@ -6,8 +6,6 @@ import {
   Scissors,
   Users,
   DollarSign,
-  BarChart3,
-  Settings,
   LogOut,
 } from "lucide-react";
 import {
@@ -37,8 +35,6 @@ const menuItems = [
   { title: "Clientes", icon: Users, path: "/clientes" },
   { title: "Profissionais", icon: Users, path: "/profissionais" },
   { title: "Financeiro", icon: DollarSign, path: "/financeiro" },
-  { title: "Relatórios", icon: BarChart3, path: "/relatorios" },
-  { title: "Configurações", icon: Settings, path: "/configuracoes" },
 ];
 
 const Layout = ({ children }: LayoutProps) => {
