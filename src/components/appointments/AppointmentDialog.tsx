@@ -230,7 +230,7 @@ export function AppointmentDialog({
                   >
                     <CalendarIcon className="mr-2 h-4 w-4" />
                     {selectedDate ? (
-                      format(new Date(selectedDate), "PPP", { locale: ptBR })
+                      format(new Date(selectedDate + 'T00:00:00'), "PPP", { locale: ptBR })
                     ) : (
                       <span>Selecione a data</span>
                     )}
@@ -239,10 +239,17 @@ export function AppointmentDialog({
                 <PopoverContent className="w-auto p-0" align="start">
                   <Calendar
                     mode="single"
-                    selected={selectedDate ? new Date(selectedDate) : undefined}
-                    onSelect={(date) =>
-                      setValue("appointment_date", date ? format(date, "yyyy-MM-dd") : "")
-                    }
+                    selected={selectedDate ? new Date(selectedDate + 'T00:00:00') : undefined}
+                    onSelect={(date) => {
+                      if (date) {
+                        const year = date.getFullYear();
+                        const month = String(date.getMonth() + 1).padStart(2, '0');
+                        const day = String(date.getDate()).padStart(2, '0');
+                        setValue("appointment_date", `${year}-${month}-${day}`);
+                      } else {
+                        setValue("appointment_date", "");
+                      }
+                    }}
                     disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
                     initialFocus
                     className="pointer-events-auto"
