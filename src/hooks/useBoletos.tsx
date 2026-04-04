@@ -70,9 +70,24 @@ export const useBoletos = () => {
     },
   });
 
+  const deleteBoleto = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("boletos").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["boletos"] });
+      toast.success("Cobrança excluída com sucesso!");
+    },
+    onError: () => {
+      toast.error("Erro ao excluir cobrança");
+    },
+  });
+
   return {
     boletos,
     isLoading,
     generateBoleto,
+    deleteBoleto,
   };
 };
