@@ -35,7 +35,7 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer } fro
 
 const Financeiro = () => {
   const { monthlyRevenue, weeklyRevenue, isLoading } = useFinancialData();
-  const { boletos, isLoading: isLoadingBoletos, deleteBoleto, refreshPixData } = useBoletos();
+  const { boletos, isLoading: isLoadingBoletos, deleteBoleto, refreshPixData, downloadBoleto } = useBoletos();
 
   const copyToClipboard = async (value: string, successMessage: string) => {
     try {
