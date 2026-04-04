@@ -16,6 +16,9 @@ export interface Boleto {
   invoice_url: string | null;
   description: string | null;
   created_at: string;
+  billing_type: string;
+  pix_qr_code_url: string | null;
+  pix_copia_e_cola: string | null;
 }
 
 export const useBoletos = () => {
@@ -43,6 +46,7 @@ export const useBoletos = () => {
       amount: number;
       due_date: string;
       description?: string;
+      billing_type?: string;
     }) => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) throw new Error("Não autenticado");

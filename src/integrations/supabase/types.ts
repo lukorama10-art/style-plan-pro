@@ -146,6 +146,7 @@ export type Database = {
           asaas_customer_id: string | null
           asaas_payment_id: string | null
           bank_slip_url: string | null
+          billing_type: string
           boleto_url: string | null
           client_id: string | null
           created_at: string
@@ -153,6 +154,8 @@ export type Database = {
           due_date: string
           id: string
           invoice_url: string | null
+          pix_copia_e_cola: string | null
+          pix_qr_code_url: string | null
           status: string
           updated_at: string
         }
@@ -162,6 +165,7 @@ export type Database = {
           asaas_customer_id?: string | null
           asaas_payment_id?: string | null
           bank_slip_url?: string | null
+          billing_type?: string
           boleto_url?: string | null
           client_id?: string | null
           created_at?: string
@@ -169,6 +173,8 @@ export type Database = {
           due_date: string
           id?: string
           invoice_url?: string | null
+          pix_copia_e_cola?: string | null
+          pix_qr_code_url?: string | null
           status?: string
           updated_at?: string
         }
@@ -178,6 +184,7 @@ export type Database = {
           asaas_customer_id?: string | null
           asaas_payment_id?: string | null
           bank_slip_url?: string | null
+          billing_type?: string
           boleto_url?: string | null
           client_id?: string | null
           created_at?: string
@@ -185,6 +192,8 @@ export type Database = {
           due_date?: string
           id?: string
           invoice_url?: string | null
+          pix_copia_e_cola?: string | null
+          pix_qr_code_url?: string | null
           status?: string
           updated_at?: string
         }
