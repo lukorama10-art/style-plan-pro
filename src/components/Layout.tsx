@@ -6,6 +6,7 @@ import {
   Scissors,
   Users,
   DollarSign,
+  Package,
   LogOut,
 } from "lucide-react";
 import {
