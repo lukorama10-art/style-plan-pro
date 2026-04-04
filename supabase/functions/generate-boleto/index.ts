@@ -47,6 +47,19 @@ Deno.serve(async (req) => {
       );
     }
 
+    // Clean CPF - remove formatting
+    const cleanCpf = client_cpf ? client_cpf.replace(/\D/g, '') : null;
+
+    if (!cleanCpf || cleanCpf.length !== 11) {
+      return new Response(
+        JSON.stringify({ 
+          success: false, 
+          error: "CPF do cliente é obrigatório para geração de boleto. Cadastre o CPF no perfil do cliente." 
+        }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     // Step 1: Create or find customer in Asaas
     const customerResponse = await fetch(`${ASAAS_SANDBOX_URL}/customers`, {
       method: "POST",
@@ -56,35 +69,34 @@ Deno.serve(async (req) => {
       },
       body: JSON.stringify({
         name: client_name,
-        cpfCnpj: client_cpf || "00000000000", // CPF placeholder for sandbox
+        cpfCnpj: cleanCpf,
         email: client_email || undefined,
       }),
     });
 
     const customerData = await customerResponse.json();
-    
-    if (!customerResponse.ok && !customerData.errors?.[0]?.description?.includes("já cadastrado")) {
-      console.error("Asaas customer error:", customerData);
-      throw new Error(`Erro ao criar cliente no Asaas: ${JSON.stringify(customerData)}`);
-    }
-
-    // If customer already exists, extract the ID from the error or use the returned one
     let customerId = customerData.id;
-    
-    if (!customerId && customerData.errors) {
-      // Try to find existing customer
-      const searchResponse = await fetch(
-        `${ASAAS_SANDBOX_URL}/customers?cpfCnpj=${client_cpf || "00000000000"}`,
-        {
-          headers: { access_token: ASAAS_API_KEY },
-        }
-      );
-      const searchData = await searchResponse.json();
-      customerId = searchData.data?.[0]?.id;
-    }
 
-    if (!customerId) {
-      throw new Error("Não foi possível obter o ID do cliente no Asaas");
+    // If customer already exists, find them
+    if (!customerId && customerData.errors) {
+      const isAlreadyRegistered = customerData.errors.some(
+        (e: any) => e.description?.toLowerCase().includes("já cadastrado") || 
+                     e.code === "invalid_cpfCnpj_already_in_use"
+      );
+
+      if (isAlreadyRegistered) {
+        const searchResponse = await fetch(
+          `${ASAAS_SANDBOX_URL}/customers?cpfCnpj=${cleanCpf}`,
+          { headers: { access_token: ASAAS_API_KEY } }
+        );
+        const searchData = await searchResponse.json();
+        customerId = searchData.data?.[0]?.id;
+      }
+
+      if (!customerId) {
+        console.error("Asaas customer error:", customerData);
+        throw new Error(`Erro ao criar cliente no Asaas: ${JSON.stringify(customerData)}`);
+      }
     }
 
     // Step 2: Create boleto payment

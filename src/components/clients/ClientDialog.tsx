@@ -35,6 +35,7 @@ const ClientDialog = ({
     name: "",
     email: "",
     phone: "",
+    cpf: "",
     notes: "",
   });
 
@@ -44,6 +45,7 @@ const ClientDialog = ({
         name: client.name,
         email: client.email || "",
         phone: formatPhoneNumber(client.phone),
+        cpf: client.cpf || "",
         notes: client.notes || "",
       });
     } else {
@@ -51,6 +53,7 @@ const ClientDialog = ({
         name: "",
         email: "",
         phone: "",
+        cpf: "",
         notes: "",
       });
     }
@@ -124,6 +127,27 @@ const ClientDialog = ({
               />
               <p className="text-xs text-muted-foreground">
                 Digite apenas números, a formatação é automática
+              </p>
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="cpf">CPF</Label>
+              <Input
+                id="cpf"
+                value={formData.cpf}
+                onChange={(e) => {
+                  const value = e.target.value.replace(/\D/g, '');
+                  const formatted = value
+                    .replace(/(\d{3})(\d)/, '$1.$2')
+                    .replace(/(\d{3})(\d)/, '$1.$2')
+                    .replace(/(\d{3})(\d{1,2})$/, '$1-$2');
+                  setFormData({ ...formData, cpf: formatted });
+                }}
+                placeholder="000.000.000-00"
+                disabled={isSaving}
+                maxLength={14}
+              />
+              <p className="text-xs text-muted-foreground">
+                Necessário para geração de boletos
               </p>
             </div>
             <div className="grid gap-2">

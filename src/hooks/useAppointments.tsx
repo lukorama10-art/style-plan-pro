@@ -226,7 +226,7 @@ export const useAppointments = (startDate?: string, endDate?: string) => {
         // Get client info
         const { data: clientData } = await supabase
           .from("clients")
-          .select("name, email")
+          .select("name, email, cpf")
           .eq("id", appointmentData.client_id)
           .single();
 
@@ -234,17 +234,21 @@ export const useAppointments = (startDate?: string, endDate?: string) => {
           const { data: { session } } = await supabase.auth.getSession();
           if (session) {
             const dueDate = appointmentData.appointment_date;
-            await supabase.functions.invoke("generate-boleto", {
+            const response = await supabase.functions.invoke("generate-boleto", {
               body: {
                 appointment_id: data.id,
                 client_id: appointmentData.client_id,
                 client_name: clientData.name,
+                client_cpf: clientData.cpf || undefined,
                 client_email: clientData.email || undefined,
                 amount: totalPrice,
                 due_date: dueDate,
                 description: `Serviços: ${serviceNames}`,
               },
             });
+            if (response.data && !response.data.success) {
+              throw new Error(response.data.error);
+            }
           }
         }
       } catch (boletoError) {
