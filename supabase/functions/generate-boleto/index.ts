@@ -260,8 +260,8 @@ Deno.serve(async (req) => {
       throw new Error(`Erro ao gerar cobrança: ${JSON.stringify(paymentData)}`);
     }
 
-    // Step 2.5: If PIX, fetch the QR Code
-    const pixData = validBillingType === "PIX" && paymentData.id
+    // Always try to fetch PIX QR Code (works for UNDEFINED and PIX billing types)
+    const pixData = paymentData.id
       ? await fetchPixData(paymentData.id, ASAAS_API_KEY)
       : { pixQrCodeUrl: null, pixCopiaECola: null, found: false };
 
