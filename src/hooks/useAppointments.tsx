@@ -251,10 +251,14 @@ export const useAppointments = (startDate?: string, endDate?: string) => {
             }
           }
         }
-      } catch (boletoError) {
+      } catch (boletoError: any) {
         console.error("Erro ao gerar boleto:", boletoError);
-        // Don't fail the appointment creation if boleto fails
-        toast.error("Agendamento criado, mas houve erro ao gerar o boleto.");
+        const msg = boletoError?.message || "Erro desconhecido";
+        if (msg.includes("CPF")) {
+          toast.error("Agendamento criado! Para gerar boleto, cadastre o CPF do cliente na aba Clientes.");
+        } else {
+          toast.error(`Agendamento criado, mas houve erro ao gerar o boleto: ${msg}`);
+        }
       }
 
       return data;
