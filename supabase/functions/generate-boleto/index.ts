@@ -10,6 +10,27 @@ const ASAAS_SANDBOX_URL = "https://sandbox.asaas.com/api/v3";
 
 const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
+const extractGatewayErrorMessage = (data: any) => {
+  if (!data) return null;
+
+  if (Array.isArray(data.errors) && data.errors.length > 0) {
+    return data.errors
+      .map((error: any) => error?.description || error?.code)
+      .filter(Boolean)
+      .join(" | ");
+  }
+
+  if (typeof data.message === "string" && data.message.trim()) {
+    return data.message;
+  }
+
+  if (typeof data.error === "string" && data.error.trim()) {
+    return data.error;
+  }
+
+  return null;
+};
+
 const fetchPixData = async (paymentId: string, apiKey: string) => {
   // Try up to 6 times with increasing delays (1s, 2s, 3s, 4s, 5s)
   for (let attempt = 0; attempt < 6; attempt++) {
@@ -25,7 +46,8 @@ const fetchPixData = async (paymentId: string, apiKey: string) => {
     );
 
     const pixData = await pixResponse.json().catch(() => null);
-    console.log(`PIX response status: ${pixResponse.status}, has data: ${!!(pixData?.encodedImage || pixData?.payload)}`);
+    const gatewayErrorMessage = extractGatewayErrorMessage(pixData);
+    console.log(`PIX response status: ${pixResponse.status}, has data: ${!!(pixData?.encodedImage || pixData?.payload)}, error: ${gatewayErrorMessage || "none"}`);
 
     if (pixResponse.ok && pixData && (pixData.encodedImage || pixData.payload)) {
       return {
@@ -34,7 +56,25 @@ const fetchPixData = async (paymentId: string, apiKey: string) => {
           : null,
         pixCopiaECola: pixData.payload || null,
         found: true,
+        terminal: false,
+        errorMessage: null,
       };
+    }
+
+    if (!pixResponse.ok) {
+      const isTerminalError = pixResponse.status >= 400 && pixResponse.status < 500 && pixResponse.status !== 429;
+
+      if (isTerminalError) {
+        return {
+          pixQrCodeUrl: null,
+          pixCopiaECola: null,
+          found: false,
+          terminal: true,
+          errorMessage:
+            gatewayErrorMessage ||
+            "O gateway recusou a geração do QR Code PIX. Verifique se a chave PIX está ativa na conta Sandbox.",
+        };
+      }
     }
   }
 
@@ -42,6 +82,8 @@ const fetchPixData = async (paymentId: string, apiKey: string) => {
     pixQrCodeUrl: null,
     pixCopiaECola: null,
     found: false,
+    terminal: false,
+    errorMessage: "O QR Code PIX ainda não está disponível no gateway. O sandbox do Asaas pode demorar alguns minutos. Tente novamente em breve.",
   };
 };
 
@@ -109,7 +151,8 @@ Deno.serve(async (req) => {
         return new Response(
           JSON.stringify({
             success: false,
-            error: "O QR Code PIX ainda não está disponível no gateway. O sandbox do Asaas pode demorar alguns minutos. Tente novamente em breve.",
+            retryable: !pixData.terminal,
+            error: pixData.errorMessage || "O QR Code PIX ainda não está disponível no gateway. O sandbox do Asaas pode demorar alguns minutos. Tente novamente em breve.",
           }),
           { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
@@ -251,7 +294,9 @@ Deno.serve(async (req) => {
     return new Response(
       JSON.stringify({
         success: true,
-        pix_pending: validBillingType === "PIX" && !pixData.found,
+        pix_pending: validBillingType === "PIX" && !pixData.found && !pixData.terminal,
+        pix_error: validBillingType === "PIX" && !pixData.found ? pixData.errorMessage : null,
+        pix_retryable: validBillingType === "PIX" && !pixData.found ? !pixData.terminal : false,
         boleto: {
           id: boleto.id,
           asaas_payment_id: paymentData.id,
