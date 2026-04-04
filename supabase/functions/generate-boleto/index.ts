@@ -236,7 +236,7 @@ Deno.serve(async (req) => {
     }
 
     // Step 2: Create payment
-    const validBillingType = billing_type === "PIX" ? "PIX" : "BOLETO";
+    const validBillingType = ["PIX", "BOLETO", "UNDEFINED"].includes(billing_type) ? billing_type : "UNDEFINED";
 
     const paymentResponse = await fetch(`${ASAAS_SANDBOX_URL}/payments`, {
       method: "POST",
