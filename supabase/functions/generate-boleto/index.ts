@@ -313,9 +313,9 @@ Deno.serve(async (req) => {
     return new Response(
       JSON.stringify({
         success: true,
-        pix_pending: !pixData.found && !pixData.terminal,
-        pix_error: !pixData.found ? pixData.errorMessage : null,
-        pix_retryable: !pixData.found ? !pixData.terminal : false,
+        pix_pending: !pixData.found,
+        pix_error: !pixData.found ? "Não foi possível gerar o QR Code PIX." : null,
+        pix_retryable: !pixData.found,
         boleto: {
           id: boleto.id,
           asaas_payment_id: paymentData.id,
