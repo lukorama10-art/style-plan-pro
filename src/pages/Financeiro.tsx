@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ExternalLink, Printer, TrendingUp } from "lucide-react";
+import { ExternalLink, Printer, TrendingUp, Trash2 } from "lucide-react";
 import Layout from "@/components/Layout";
 import { useFinancialData } from "@/hooks/useFinancialData";
 import { useBoletos, type Boleto } from "@/hooks/useBoletos";
