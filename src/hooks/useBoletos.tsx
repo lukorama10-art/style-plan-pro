@@ -102,10 +102,6 @@ export const useBoletos = () => {
         throw new Error(response.error.message || "Erro ao carregar PIX");
       }
 
-      if (!response.data?.success) {
-        throw new Error(response.data?.error || "Erro ao carregar PIX");
-      }
-
       return response.data;
     },
     onSuccess: (data) => {
