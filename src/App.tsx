@@ -9,6 +9,7 @@ import Services from "./pages/Services";
 import Professionals from "./pages/Professionals";
 import Agenda from "./pages/Agenda";
 import Financeiro from "./pages/Financeiro";
+import Estoque from "./pages/Estoque";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 import ProtectedRoute from "./components/ProtectedRoute";
