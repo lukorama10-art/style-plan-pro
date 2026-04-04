@@ -28,7 +28,7 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer } fro
 
 const Financeiro = () => {
   const { monthlyRevenue, weeklyRevenue, isLoading } = useFinancialData();
-  const { boletos, isLoading: isLoadingBoletos, deleteBoleto } = useBoletos();
+  const { boletos, isLoading: isLoadingBoletos, deleteBoleto, refreshPixData } = useBoletos();
 
   const getBoletoLink = (boleto: Boleto) =>
     boleto.boleto_url || boleto.bank_slip_url || boleto.invoice_url;
@@ -94,6 +94,7 @@ const Financeiro = () => {
                   const boletoLink = getBoletoLink(boleto);
                   const billingType = boleto.billing_type ?? (boleto.pix_qr_code_url || boleto.pix_copia_e_cola ? "PIX" : "BOLETO");
                   const hasPixData = Boolean(boleto.pix_qr_code_url || boleto.pix_copia_e_cola);
+                  const canRefreshPix = billingType === "PIX" && boleto.asaas_payment_id && !hasPixData;
 
                   return (
                     <div
@@ -153,11 +154,27 @@ const Financeiro = () => {
                                 Copiar código PIX
                               </Button>
                             )}
+                            {canRefreshPix && (
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() =>
+                                  refreshPixData.mutate({
+                                    boletoId: boleto.id,
+                                    asaasPaymentId: boleto.asaas_payment_id!,
+                                  })
+                                }
+                                disabled={refreshPixData.isPending}
+                              >
+                                Atualizar PIX
+                              </Button>
+                            )}
                           </div>
                         )}
 
                         <div className="flex flex-col gap-2 sm:flex-row">
-                          {boletoLink ? (
+                          {billingType === "PIX" && hasPixData ? null : boletoLink ? (
                             <Button
                               type="button"
                               onClick={() => openInNewTab(boletoLink as string)}
