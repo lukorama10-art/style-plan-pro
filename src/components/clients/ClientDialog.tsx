@@ -130,6 +130,27 @@ const ClientDialog = ({
               </p>
             </div>
             <div className="grid gap-2">
+              <Label htmlFor="cpf">CPF</Label>
+              <Input
+                id="cpf"
+                value={formData.cpf}
+                onChange={(e) => {
+                  const value = e.target.value.replace(/\D/g, '');
+                  const formatted = value
+                    .replace(/(\d{3})(\d)/, '$1.$2')
+                    .replace(/(\d{3})(\d)/, '$1.$2')
+                    .replace(/(\d{3})(\d{1,2})$/, '$1-$2');
+                  setFormData({ ...formData, cpf: formatted });
+                }}
+                placeholder="000.000.000-00"
+                disabled={isSaving}
+                maxLength={14}
+              />
+              <p className="text-xs text-muted-foreground">
+                Necessário para geração de boletos
+              </p>
+            </div>
+            <div className="grid gap-2">
               <Label htmlFor="email">Email</Label>
               <Input
                 id="email"
