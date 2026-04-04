@@ -88,10 +88,40 @@ export const useBoletos = () => {
     },
   });
 
+  const refreshPixData = useMutation({
+    mutationFn: async ({ boletoId, asaasPaymentId }: { boletoId: string; asaasPaymentId: string }) => {
+      const response = await supabase.functions.invoke("generate-boleto", {
+        body: {
+          action: "refresh_pix",
+          boleto_id: boletoId,
+          asaas_payment_id: asaasPaymentId,
+        },
+      });
+
+      if (response.error) {
+        throw new Error(response.error.message || "Erro ao carregar PIX");
+      }
+
+      if (!response.data?.success) {
+        throw new Error(response.data?.error || "Erro ao carregar PIX");
+      }
+
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["boletos"] });
+      toast.success("PIX carregado com sucesso!");
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Erro ao carregar PIX");
+    },
+  });
+
   return {
     boletos,
     isLoading,
     generateBoleto,
     deleteBoleto,
+    refreshPixData,
   };
 };

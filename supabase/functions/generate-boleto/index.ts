@@ -8,6 +8,37 @@ const corsHeaders = {
 
 const ASAAS_SANDBOX_URL = "https://sandbox.asaas.com/api/v3";
 
+const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+const fetchPixData = async (paymentId: string, apiKey: string) => {
+  for (let attempt = 0; attempt < 4; attempt++) {
+    const pixResponse = await fetch(
+      `${ASAAS_SANDBOX_URL}/payments/${paymentId}/pixQrCode`,
+      { headers: { access_token: apiKey } }
+    );
+
+    const pixData = await pixResponse.json().catch(() => null);
+
+    if (pixResponse.ok && pixData && (pixData.encodedImage || pixData.payload)) {
+      return {
+        pixQrCodeUrl: pixData.encodedImage
+          ? `data:image/png;base64,${pixData.encodedImage}`
+          : null,
+        pixCopiaECola: pixData.payload || null,
+      };
+    }
+
+    if (attempt < 3) {
+      await wait(500 * (attempt + 1));
+    }
+  }
+
+  return {
+    pixQrCodeUrl: null,
+    pixCopiaECola: null,
+  };
+};
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
@@ -43,7 +74,52 @@ Deno.serve(async (req) => {
     }
 
     const body = await req.json();
-    const { appointment_id, client_id, client_name, client_cpf, client_email, amount, due_date, description, billing_type = "BOLETO" } = body;
+    const {
+      action,
+      appointment_id,
+      client_id,
+      client_name,
+      client_cpf,
+      client_email,
+      amount,
+      due_date,
+      description,
+      billing_type = "BOLETO",
+      boleto_id,
+      asaas_payment_id,
+    } = body;
+
+    if (action === "refresh_pix") {
+      if (!boleto_id || !asaas_payment_id) {
+        return new Response(
+          JSON.stringify({ success: false, error: "boleto_id e asaas_payment_id são obrigatórios" }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      const pixData = await fetchPixData(asaas_payment_id, ASAAS_API_KEY);
+
+      const { error: updateError } = await supabase
+        .from("boletos")
+        .update({
+          billing_type: "PIX",
+          pix_qr_code_url: pixData.pixQrCodeUrl,
+          pix_copia_e_cola: pixData.pixCopiaECola,
+        })
+        .eq("id", boleto_id);
+
+      if (updateError) {
+        throw new Error(`Erro ao atualizar PIX: ${updateError.message}`);
+      }
+
+      return new Response(
+        JSON.stringify({ success: true, boleto: pixData }),
+        {
+          status: 200,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
+    }
 
     if (!client_name || !amount || !due_date) {
       return new Response(
@@ -130,20 +206,9 @@ Deno.serve(async (req) => {
     }
 
     // Step 2.5: If PIX, fetch the QR Code
-    let pixQrCodeUrl = null;
-    let pixCopiaECola = null;
-
-    if (validBillingType === "PIX" && paymentData.id) {
-      const pixResponse = await fetch(
-        `${ASAAS_SANDBOX_URL}/payments/${paymentData.id}/pixQrCode`,
-        { headers: { access_token: ASAAS_API_KEY } }
-      );
-      if (pixResponse.ok) {
-        const pixData = await pixResponse.json();
-        pixQrCodeUrl = pixData.encodedImage ? `data:image/png;base64,${pixData.encodedImage}` : null;
-        pixCopiaECola = pixData.payload || null;
-      }
-    }
+    const pixData = validBillingType === "PIX" && paymentData.id
+      ? await fetchPixData(paymentData.id, ASAAS_API_KEY)
+      : { pixQrCodeUrl: null, pixCopiaECola: null };
 
     // Step 3: Save payment info in database
     const { data: boleto, error: insertError } = await supabase
@@ -160,8 +225,8 @@ Deno.serve(async (req) => {
         invoice_url: paymentData.invoiceUrl || null,
         description: paymentData.description,
         billing_type: validBillingType,
-        pix_qr_code_url: pixQrCodeUrl,
-        pix_copia_e_cola: pixCopiaECola,
+        pix_qr_code_url: pixData.pixQrCodeUrl,
+        pix_copia_e_cola: pixData.pixCopiaECola,
       })
       .select()
       .single();
@@ -184,8 +249,8 @@ Deno.serve(async (req) => {
           due_date: paymentData.dueDate,
           status: paymentData.status,
           billing_type: validBillingType,
-          pix_qr_code_url: pixQrCodeUrl,
-          pix_copia_e_cola: pixCopiaECola,
+          pix_qr_code_url: pixData.pixQrCodeUrl,
+          pix_copia_e_cola: pixData.pixCopiaECola,
         },
       }),
       {
