@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { isValidCpf } from "@/utils/cpf";
 
 export interface Appointment {
   id: string;
@@ -231,6 +232,11 @@ export const useAppointments = (startDate?: string, endDate?: string) => {
           .single();
 
         if (clientData && totalPrice > 0) {
+          if (!clientData.cpf || !isValidCpf(clientData.cpf)) {
+            toast.error("Agendamento criado! O PIX não foi gerado porque o CPF do cliente é inválido.");
+            return data;
+          }
+
           const { data: { session } } = await supabase.auth.getSession();
           if (session) {
             const dueDate = appointmentData.appointment_date;
@@ -247,9 +253,13 @@ export const useAppointments = (startDate?: string, endDate?: string) => {
                 billing_type: "PIX",
               },
             });
+            if (response.error) {
+              throw new Error(response.error.message || "Erro ao gerar cobrança");
+            }
             if (response.data && !response.data.success) {
               throw new Error(response.data.error);
             }
+            toast.success("Agendamento criado com sucesso! PIX gerado.");
           }
         }
       } catch (boletoError: any) {
@@ -267,7 +277,7 @@ export const useAppointments = (startDate?: string, endDate?: string) => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["appointments"] });
       queryClient.invalidateQueries({ queryKey: ["boletos"] });
-      toast.success("Agendamento criado com sucesso! Boleto gerado.");
+      toast.success("Agendamento criado com sucesso!");
     },
     onError: (error: any) => {
       toast.error(error.message || "Erro ao criar agendamento");
