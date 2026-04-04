@@ -1,10 +1,21 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ExternalLink, Printer, TrendingUp } from "lucide-react";
+import { ExternalLink, Printer, TrendingUp, Trash2 } from "lucide-react";
 import Layout from "@/components/Layout";
 import { useFinancialData } from "@/hooks/useFinancialData";
 import { useBoletos, type Boleto } from "@/hooks/useBoletos";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { formatPrice } from "@/utils/priceFormatter";
 import {
   ChartContainer,
@@ -15,7 +26,7 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer } fro
 
 const Financeiro = () => {
   const { monthlyRevenue, weeklyRevenue, isLoading } = useFinancialData();
-  const { boletos, isLoading: isLoadingBoletos } = useBoletos();
+  const { boletos, isLoading: isLoadingBoletos, deleteBoleto } = useBoletos();
 
   const getBoletoLink = (boleto: Boleto) =>
     boleto.boleto_url || boleto.bank_slip_url || boleto.invoice_url;
@@ -117,6 +128,29 @@ const Financeiro = () => {
                               Documento indisponível
                             </Button>
                           )}
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button type="button" variant="destructive" size="icon">
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Excluir cobrança</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  Tem certeza que deseja excluir esta cobrança? Esta ação não pode ser desfeita.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                <AlertDialogAction
+                                  onClick={() => deleteBoleto.mutate(boleto.id)}
+                                >
+                                  Excluir
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
                         </div>
                       </div>
                     </div>
