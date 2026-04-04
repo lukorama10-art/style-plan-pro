@@ -186,14 +186,29 @@ const Agenda = () => {
                           onClick={() => handleEdit(apt)}
                         >
                           <td className="p-4">
-                            <div className="font-semibold text-sm mb-2">
-                              {apt.appointment_time.slice(0, 5)} - {calculateEndTime(apt.appointment_time, apt.services)}
-                            </div>
-                            <div className="text-sm mb-1">
-                              {apt.client?.name} - {apt.services?.map((s) => s.name).join(", ")}
-                            </div>
-                            <div className="text-sm text-muted-foreground">
-                              {apt.professional?.full_name}
+                            <div className="flex items-center justify-between">
+                              <div className="flex-1">
+                                <div className="font-semibold text-sm mb-2">
+                                  {apt.appointment_time.slice(0, 5)} - {calculateEndTime(apt.appointment_time, apt.services)}
+                                </div>
+                                <div className="text-sm mb-1">
+                                  {apt.client?.name} - {apt.services?.map((s) => s.name).join(", ")}
+                                </div>
+                                <div className="text-sm text-muted-foreground">
+                                  {apt.professional?.full_name}
+                                </div>
+                              </div>
+                              {apt.status !== "completed" && (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="ml-2 shrink-0"
+                                  onClick={(e) => handleFinalize(apt, e)}
+                                >
+                                  <CheckCircle className="mr-1 h-4 w-4" />
+                                  Finalizar
+                                </Button>
+                              )}
                             </div>
                           </td>
                         </tr>
