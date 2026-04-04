@@ -9,6 +9,7 @@ import { useBoletos, type Boleto } from "@/hooks/useBoletos";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -36,9 +37,21 @@ const Financeiro = () => {
   const { monthlyRevenue, weeklyRevenue, isLoading } = useFinancialData();
   const { boletos, isLoading: isLoadingBoletos, deleteBoleto, refreshPixData } = useBoletos();
 
+  const copyToClipboard = async (value: string, successMessage: string) => {
+    try {
+      await navigator.clipboard.writeText(value);
+      toast.success(successMessage);
+    } catch {
+      toast.error("Não foi possível copiar o conteúdo.");
+    }
+  };
+
   const copyPixCode = (code: string) => {
-    navigator.clipboard.writeText(code);
-    toast.success("Código PIX copiado!");
+    void copyToClipboard(code, "Código PIX copiado!");
+  };
+
+  const copyPaymentLink = (link: string) => {
+    void copyToClipboard(link, "Link da cobrança copiado!");
   };
 
   const getStatusVariant = (status: string) => {
@@ -135,6 +148,9 @@ const Financeiro = () => {
                               <DialogContent className="max-w-md">
                                 <DialogHeader>
                                   <DialogTitle>{boleto.description || "Cobrança"}</DialogTitle>
+                                  <DialogDescription>
+                                    Visualize os dados da cobrança e use o link abaixo sem depender de pop-up.
+                                  </DialogDescription>
                                 </DialogHeader>
                                 <div className="space-y-4">
                                   <div className="space-y-1 text-sm">
@@ -191,14 +207,35 @@ const Financeiro = () => {
                                   )}
 
                                   {boletoLink && (
-                                    <Button
-                                      type="button"
-                                      className="w-full"
-                                      onClick={() => window.open(boletoLink, "_blank", "noopener,noreferrer")}
-                                    >
-                                      <ExternalLink className="w-4 h-4" />
-                                      {billingType === "PIX" ? "Ver cobrança" : "Ver boleto"}
-                                    </Button>
+                                    <div className="space-y-3 rounded-lg border border-border bg-muted/30 p-4">
+                                      <div className="space-y-1">
+                                        <p className="text-sm font-medium">
+                                          {billingType === "PIX" ? "Link da cobrança" : "Link do boleto"}
+                                        </p>
+                                        <p className="break-all text-xs text-muted-foreground">
+                                          {boletoLink}
+                                        </p>
+                                      </div>
+
+                                      <div className="flex flex-col gap-2 sm:flex-row">
+                                        <Button asChild type="button" className="flex-1">
+                                          <a href={boletoLink} target="_self" rel="noreferrer">
+                                            <ExternalLink className="w-4 h-4" />
+                                            {billingType === "PIX" ? "Abrir cobrança" : "Abrir boleto"}
+                                          </a>
+                                        </Button>
+
+                                        <Button
+                                          type="button"
+                                          variant="outline"
+                                          className="flex-1"
+                                          onClick={() => copyPaymentLink(boletoLink)}
+                                        >
+                                          <Copy className="w-4 h-4" />
+                                          Copiar link
+                                        </Button>
+                                      </div>
+                                    </div>
                                   )}
                                 </div>
                               </DialogContent>
