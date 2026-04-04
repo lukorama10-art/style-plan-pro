@@ -1,7 +1,8 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Calendar, DollarSign, TrendingUp } from "lucide-react";
+import { Calendar, DollarSign, TrendingUp, Package, AlertTriangle } from "lucide-react";
 import Layout from "@/components/Layout";
 import { useDashboardData } from "@/hooks/useDashboardData";
+import { useProducts } from "@/hooks/useProducts";
 import { formatPrice } from "@/utils/priceFormatter";
 import { Badge } from "@/components/ui/badge";
 
