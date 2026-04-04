@@ -65,8 +65,19 @@ export const useBoletos = () => {
 
       return response.data;
     },
-    onSuccess: () => {
+    onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: ["boletos"] });
+
+      if (result?.pix_pending) {
+        toast.warning(result?.pix_error || "Cobrança gerada, mas o QR Code PIX ainda não ficou disponível no gateway.");
+        return;
+      }
+
+      if (result?.pix_error) {
+        toast.warning(result.pix_error);
+        return;
+      }
+
       toast.success("Boleto gerado com sucesso!");
     },
     onError: (error: Error) => {
@@ -108,9 +119,10 @@ export const useBoletos = () => {
       queryClient.invalidateQueries({ queryKey: ["boletos"] });
       if (data?.boleto?.found === false || data?.success === false) {
         toast.warning(data?.error || "QR Code PIX ainda não disponível. Tente novamente em alguns minutos.");
-      } else {
-        toast.success("PIX carregado com sucesso!");
+        return;
       }
+
+      toast.success("PIX carregado com sucesso!");
     },
     onError: (error: Error) => {
       toast.error(error.message || "Erro ao carregar PIX");
