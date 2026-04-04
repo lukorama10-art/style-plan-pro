@@ -104,28 +104,17 @@ const Financeiro = () => {
                         </div>
 
                         <div className="flex flex-col gap-2 sm:flex-row">
-                          {boletoLink ? (
+                          {boleto.invoice_url ? (
                             <Button
                               type="button"
-                              onClick={() => openInNewTab(boletoLink)}
-                            >
-                              <Printer className="w-4 h-4" />
-                              Visualizar / imprimir
-                            </Button>
-                          ) : (
-                            <Button type="button" variant="outline" disabled>
-                              Documento indisponível
-                            </Button>
-                          )}
-
-                          {boleto.invoice_url && boleto.invoice_url !== boletoLink && (
-                            <Button
-                              type="button"
-                              variant="outline"
                               onClick={() => openInNewTab(boleto.invoice_url as string)}
                             >
                               <ExternalLink className="w-4 h-4" />
                               Ver cobrança
+                            </Button>
+                          ) : (
+                            <Button type="button" variant="outline" disabled>
+                              Documento indisponível
                             </Button>
                           )}
                         </div>
