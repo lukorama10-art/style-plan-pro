@@ -131,34 +131,36 @@ export const useBoletos = () => {
 
   const downloadBoleto = async (asaasPaymentId: string) => {
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        toast.error("Não autenticado");
-        return;
-      }
-
       toast.info("Baixando boleto...");
 
-      const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
-      const url = `https://${projectId}.supabase.co/functions/v1/proxy-boleto`;
-
-      const response = await fetch(url, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${session.access_token}`,
-        },
-        body: JSON.stringify({ asaas_payment_id: asaasPaymentId }),
+      const response = await supabase.functions.invoke("proxy-boleto", {
+        body: { asaas_payment_id: asaasPaymentId },
       });
 
-      if (!response.ok) {
-        const errData = await response.json().catch(() => null);
-        throw new Error(errData?.error || "Erro ao baixar boleto");
+      if (response.error) {
+        throw new Error(response.error.message || "Erro ao baixar boleto");
       }
 
-      const blob = await response.blob();
+      // The response.data will be the raw response when content-type is not JSON
+      // supabase.functions.invoke returns Blob for non-JSON responses
+      const blob = response.data instanceof Blob
+        ? response.data
+        : new Blob([JSON.stringify(response.data)], { type: "application/pdf" });
+
       const blobUrl = URL.createObjectURL(blob);
-      window.open(blobUrl, "_blank");
+
+      // Use anchor click to trigger download (avoids popup blockers)
+      const a = document.createElement("a");
+      a.href = blobUrl;
+      a.target = "_blank";
+      a.rel = "noopener";
+      a.style.display = "none";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+
+      // Cleanup after a delay
+      setTimeout(() => URL.revokeObjectURL(blobUrl), 10000);
     } catch (error: any) {
       toast.error(error.message || "Erro ao baixar boleto");
     }
