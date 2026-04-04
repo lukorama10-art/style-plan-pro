@@ -294,9 +294,9 @@ Deno.serve(async (req) => {
     return new Response(
       JSON.stringify({
         success: true,
-        pix_pending: validBillingType === "PIX" && !pixData.found && !pixData.terminal,
-        pix_error: validBillingType === "PIX" && !pixData.found ? pixData.errorMessage : null,
-        pix_retryable: validBillingType === "PIX" && !pixData.found ? !pixData.terminal : false,
+        pix_pending: !pixData.found && !pixData.terminal,
+        pix_error: !pixData.found ? pixData.errorMessage : null,
+        pix_retryable: !pixData.found ? !pixData.terminal : false,
         boleto: {
           id: boleto.id,
           asaas_payment_id: paymentData.id,
