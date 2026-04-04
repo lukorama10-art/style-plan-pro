@@ -236,7 +236,7 @@ Deno.serve(async (req) => {
     }
 
     // Step 2: Create payment
-    const validBillingType = billing_type === "PIX" ? "PIX" : "BOLETO";
+    const validBillingType = ["PIX", "BOLETO", "UNDEFINED"].includes(billing_type) ? billing_type : "UNDEFINED";
 
     const paymentResponse = await fetch(`${ASAAS_SANDBOX_URL}/payments`, {
       method: "POST",
@@ -260,8 +260,8 @@ Deno.serve(async (req) => {
       throw new Error(`Erro ao gerar cobrança: ${JSON.stringify(paymentData)}`);
     }
 
-    // Step 2.5: If PIX, fetch the QR Code
-    const pixData = validBillingType === "PIX" && paymentData.id
+    // Always try to fetch PIX QR Code (works for UNDEFINED and PIX billing types)
+    const pixData = paymentData.id
       ? await fetchPixData(paymentData.id, ASAAS_API_KEY)
       : { pixQrCodeUrl: null, pixCopiaECola: null, found: false };
 
@@ -294,9 +294,9 @@ Deno.serve(async (req) => {
     return new Response(
       JSON.stringify({
         success: true,
-        pix_pending: validBillingType === "PIX" && !pixData.found && !pixData.terminal,
-        pix_error: validBillingType === "PIX" && !pixData.found ? pixData.errorMessage : null,
-        pix_retryable: validBillingType === "PIX" && !pixData.found ? !pixData.terminal : false,
+        pix_pending: !pixData.found && !pixData.terminal,
+        pix_error: !pixData.found ? pixData.errorMessage : null,
+        pix_retryable: !pixData.found ? !pixData.terminal : false,
         boleto: {
           id: boleto.id,
           asaas_payment_id: paymentData.id,
