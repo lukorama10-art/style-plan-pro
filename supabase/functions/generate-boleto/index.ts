@@ -279,9 +279,9 @@ Deno.serve(async (req) => {
       throw new Error(`Erro ao gerar cobrança: ${JSON.stringify(paymentData)}`);
     }
 
-    // Always try to fetch PIX QR Code (works for UNDEFINED and PIX billing types)
-    const pixData = paymentData.id
-      ? await fetchPixData(paymentData.id, ASAAS_API_KEY)
+    // Generate PIX QR Code using our own key (independent of Asaas)
+    const pixData = PIX_KEY
+      ? await generatePixQrCode(PIX_KEY, amount, description)
       : { pixQrCodeUrl: null, pixCopiaECola: null, found: false };
 
     // Step 3: Save payment info in database
