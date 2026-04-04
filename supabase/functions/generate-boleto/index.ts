@@ -99,6 +99,8 @@ Deno.serve(async (req) => {
       throw new Error("ASAAS_API_KEY is not configured");
     }
 
+    const PIX_KEY = Deno.env.get("PIX_KEY");
+
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
