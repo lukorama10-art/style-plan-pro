@@ -2,6 +2,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ExternalLink, Printer, TrendingUp, Trash2 } from "lucide-react";
+import { Copy, QrCode } from "lucide-react";
+import { toast } from "sonner";
 import Layout from "@/components/Layout";
 import { useFinancialData } from "@/hooks/useFinancialData";
 import { useBoletos, type Boleto } from "@/hooks/useBoletos";
@@ -30,6 +32,11 @@ const Financeiro = () => {
 
   const getBoletoLink = (boleto: Boleto) =>
     boleto.boleto_url || boleto.bank_slip_url || boleto.invoice_url;
+
+  const copyPixCode = (code: string) => {
+    navigator.clipboard.writeText(code);
+    toast.success("Código PIX copiado!");
+  };
 
   const openInNewTab = (url: string) => {
     window.open(url, "_blank", "noopener,noreferrer");
@@ -72,10 +79,10 @@ const Financeiro = () => {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Printer className="w-5 h-5" />
-              Boletos gerados
+              Cobranças geradas
             </CardTitle>
             <p className="text-sm text-muted-foreground">
-              Os boletos são gerados automaticamente ao finalizar o agendamento e ficam disponíveis aqui para visualizar ou imprimir.
+              As cobranças (PIX/Boleto) são geradas automaticamente ao finalizar o agendamento.
             </p>
           </CardHeader>
           <CardContent>
@@ -97,6 +104,9 @@ const Financeiro = () => {
                             <p className="font-medium text-foreground">
                               {boleto.description || "Boleto gerado"}
                             </p>
+                            <Badge variant="outline">
+                              {boleto.billing_type === "PIX" ? "PIX" : "Boleto"}
+                            </Badge>
                             <Badge variant={getStatusVariant(boleto.status)}>
                               {boleto.status}
                             </Badge>
@@ -113,6 +123,30 @@ const Financeiro = () => {
                             </p>
                           </div>
                         </div>
+
+                        {boleto.billing_type === "PIX" && boleto.pix_qr_code_url && (
+                          <div className="mt-3 flex flex-col items-center gap-2 rounded-lg border border-border bg-background p-4">
+                            <p className="text-sm font-medium flex items-center gap-1">
+                              <QrCode className="w-4 h-4" /> QR Code PIX
+                            </p>
+                            <img
+                              src={boleto.pix_qr_code_url}
+                              alt="QR Code PIX"
+                              className="w-48 h-48 rounded"
+                            />
+                            {boleto.pix_copia_e_cola && (
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => copyPixCode(boleto.pix_copia_e_cola!)}
+                              >
+                                <Copy className="w-4 h-4" />
+                                Copiar código PIX
+                              </Button>
+                            )}
+                          </div>
+                        )}
 
                         <div className="flex flex-col gap-2 sm:flex-row">
                           {boleto.invoice_url ? (
