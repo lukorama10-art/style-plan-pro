@@ -1,12 +1,18 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ExternalLink, Printer, TrendingUp, Trash2 } from "lucide-react";
-import { Copy, QrCode } from "lucide-react";
+import { ExternalLink, Printer, TrendingUp, Trash2, Eye, Copy, QrCode } from "lucide-react";
 import { toast } from "sonner";
 import Layout from "@/components/Layout";
 import { useFinancialData } from "@/hooks/useFinancialData";
 import { useBoletos, type Boleto } from "@/hooks/useBoletos";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -30,16 +36,9 @@ const Financeiro = () => {
   const { monthlyRevenue, weeklyRevenue, isLoading } = useFinancialData();
   const { boletos, isLoading: isLoadingBoletos, deleteBoleto, refreshPixData } = useBoletos();
 
-  const getBoletoLink = (boleto: Boleto) =>
-    boleto.boleto_url || boleto.bank_slip_url || boleto.invoice_url;
-
   const copyPixCode = (code: string) => {
     navigator.clipboard.writeText(code);
     toast.success("Código PIX copiado!");
-  };
-
-  const openInNewTab = (url: string) => {
-    window.open(url, "_blank", "noopener,noreferrer");
   };
 
   const getStatusVariant = (status: string) => {
@@ -91,10 +90,8 @@ const Financeiro = () => {
             ) : boletos?.length ? (
               <div className="space-y-4">
                 {boletos.map((boleto) => {
-                  const boletoLink = getBoletoLink(boleto);
                   const billingType = boleto.billing_type ?? (boleto.pix_qr_code_url || boleto.pix_copia_e_cola ? "PIX" : "BOLETO");
-                  const hasPixData = Boolean(boleto.pix_qr_code_url || boleto.pix_copia_e_cola);
-                  const canRefreshPix = billingType === "PIX" && boleto.asaas_payment_id && !hasPixData;
+                  const boletoLink = boleto.boleto_url || boleto.bank_slip_url || boleto.invoice_url;
 
                   return (
                     <div
@@ -102,7 +99,7 @@ const Financeiro = () => {
                       className="rounded-lg border border-border bg-card p-4"
                     >
                       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-                        <div className="space-y-2">
+                          <div className="space-y-2">
                           <div className="flex flex-wrap items-center gap-2">
                             <p className="font-medium text-foreground">
                               {boleto.description || "Cobrança gerada"}
@@ -127,66 +124,85 @@ const Financeiro = () => {
                           </div>
                         </div>
 
-                        {billingType === "PIX" && (
-                          <div className="mt-3 flex flex-col items-center gap-2 rounded-lg border border-border bg-background p-4">
-                            <p className="text-sm font-medium flex items-center gap-1">
-                              <QrCode className="w-4 h-4" /> PIX
-                            </p>
-                            {boleto.pix_qr_code_url ? (
-                              <img
-                                src={boleto.pix_qr_code_url}
-                                alt="QR Code PIX"
-                                className="w-48 h-48 rounded"
-                              />
-                            ) : (
-                              <p className="text-xs text-muted-foreground text-center max-w-52">
-                                QR Code ainda não disponível. O sandbox pode demorar alguns minutos. Clique em "Carregar PIX" para tentar novamente.
-                              </p>
-                            )}
-                            {boleto.pix_copia_e_cola && (
-                              <Button
-                                type="button"
-                                variant="outline"
-                                size="sm"
-                                onClick={() => copyPixCode(boleto.pix_copia_e_cola!)}
-                              >
-                                <Copy className="w-4 h-4" />
-                                Copiar código PIX
-                              </Button>
-                            )}
-                            {canRefreshPix && (
-                              <Button
-                                type="button"
-                                variant="outline"
-                                size="sm"
-                                onClick={() =>
-                                  refreshPixData.mutate({
-                                    boletoId: boleto.id,
-                                    asaasPaymentId: boleto.asaas_payment_id!,
-                                  })
-                                }
-                                disabled={refreshPixData.isPending}
-                              >
-                                {refreshPixData.isPending ? "Carregando..." : "Carregar PIX"}
-                              </Button>
-                            )}
-                          </div>
-                        )}
-
                         <div className="flex flex-col gap-2 sm:flex-row">
-                          {billingType === "PIX" ? null : boletoLink ? (
-                            <Button
-                              type="button"
-                              onClick={() => openInNewTab(boletoLink as string)}
-                            >
-                              <ExternalLink className="w-4 h-4" />
-                              Ver cobrança
-                            </Button>
-                          ) : (
-                            <Button type="button" variant="outline" disabled>
-                              Documento indisponível
-                            </Button>
-                          )}
+                            <Dialog>
+                              <DialogTrigger asChild>
+                                <Button type="button">
+                                  <Eye className="w-4 h-4" />
+                                  Visualizar
+                                </Button>
+                              </DialogTrigger>
+                              <DialogContent className="max-w-md">
+                                <DialogHeader>
+                                  <DialogTitle>{boleto.description || "Cobrança"}</DialogTitle>
+                                </DialogHeader>
+                                <div className="space-y-4">
+                                  <div className="space-y-1 text-sm">
+                                    <p><strong>Tipo:</strong> {billingType}</p>
+                                    <p><strong>Valor:</strong> {formatPrice(Number(boleto.amount))}</p>
+                                    <p><strong>Status:</strong> {boleto.status}</p>
+                                    <p><strong>Vencimento:</strong> {new Date(`${boleto.due_date}T00:00:00`).toLocaleDateString("pt-BR")}</p>
+                                  </div>
+
+                                  {billingType === "PIX" && (
+                                    <div className="flex flex-col items-center gap-3 rounded-lg border border-border bg-muted/30 p-4">
+                                      <p className="text-sm font-medium flex items-center gap-1">
+                                        <QrCode className="w-4 h-4" /> QR Code PIX
+                                      </p>
+                                      {boleto.pix_qr_code_url ? (
+                                        <img
+                                          src={boleto.pix_qr_code_url}
+                                          alt="QR Code PIX"
+                                          className="w-48 h-48 rounded"
+                                        />
+                                      ) : (
+                                        <p className="text-xs text-muted-foreground text-center">
+                                          QR Code ainda não disponível.
+                                        </p>
+                                      )}
+                                      {boleto.pix_copia_e_cola && (
+                                        <Button
+                                          type="button"
+                                          variant="outline"
+                                          size="sm"
+                                          onClick={() => copyPixCode(boleto.pix_copia_e_cola!)}
+                                        >
+                                          <Copy className="w-4 h-4" />
+                                          Copiar código PIX
+                                        </Button>
+                                      )}
+                                      {billingType === "PIX" && boleto.asaas_payment_id && !boleto.pix_qr_code_url && (
+                                        <Button
+                                          type="button"
+                                          variant="outline"
+                                          size="sm"
+                                          onClick={() =>
+                                            refreshPixData.mutate({
+                                              boletoId: boleto.id,
+                                              asaasPaymentId: boleto.asaas_payment_id!,
+                                            })
+                                          }
+                                          disabled={refreshPixData.isPending}
+                                        >
+                                          {refreshPixData.isPending ? "Carregando..." : "Carregar PIX"}
+                                        </Button>
+                                      )}
+                                    </div>
+                                  )}
+
+                                  {boletoLink && (
+                                    <Button
+                                      type="button"
+                                      className="w-full"
+                                      onClick={() => window.open(boletoLink, "_blank", "noopener,noreferrer")}
+                                    >
+                                      <ExternalLink className="w-4 h-4" />
+                                      {billingType === "PIX" ? "Ver cobrança" : "Ver boleto"}
+                                    </Button>
+                                  )}
+                                </div>
+                              </DialogContent>
+                            </Dialog>
                           <AlertDialog>
                             <AlertDialogTrigger asChild>
                               <Button type="button" variant="destructive" size="icon">
