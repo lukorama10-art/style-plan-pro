@@ -8,83 +8,61 @@ const corsHeaders = {
 
 const ASAAS_SANDBOX_URL = "https://sandbox.asaas.com/api/v3";
 
-const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+/* ── BR Code (EMV) helpers ── */
 
-const extractGatewayErrorMessage = (data: any) => {
-  if (!data) return null;
+const tlv = (id: string, value: string) =>
+  `${id}${String(value.length).padStart(2, "0")}${value}`;
 
-  if (Array.isArray(data.errors) && data.errors.length > 0) {
-    return data.errors
-      .map((error: any) => error?.description || error?.code)
-      .filter(Boolean)
-      .join(" | ");
+const crc16 = (payload: string): string => {
+  const poly = 0x1021;
+  let crc = 0xffff;
+  for (let i = 0; i < payload.length; i++) {
+    crc ^= payload.charCodeAt(i) << 8;
+    for (let j = 0; j < 8; j++) {
+      crc = crc & 0x8000 ? (crc << 1) ^ poly : crc << 1;
+      crc &= 0xffff;
+    }
   }
-
-  if (typeof data.message === "string" && data.message.trim()) {
-    return data.message;
-  }
-
-  if (typeof data.error === "string" && data.error.trim()) {
-    return data.error;
-  }
-
-  return null;
+  return crc.toString(16).toUpperCase().padStart(4, "0");
 };
 
-const fetchPixData = async (paymentId: string, apiKey: string) => {
-  // Try up to 6 times with increasing delays (1s, 2s, 3s, 4s, 5s)
-  for (let attempt = 0; attempt < 6; attempt++) {
-    if (attempt > 0) {
-      await wait(1000 * attempt);
-    }
+const buildBrCode = (
+  pixKey: string,
+  amount: number,
+  description?: string,
+): string => {
+  const gui = tlv("00", "br.gov.bcb.pix");
+  const key = tlv("01", pixKey);
+  const desc = description ? tlv("02", description.slice(0, 40)) : "";
+  const mai = tlv("26", `${gui}${key}${desc}`);
+  const txId = `SLP${Date.now().toString(36).toUpperCase()}`;
+  const additionalData = tlv("62", tlv("05", txId.slice(0, 25)));
 
-    console.log(`PIX attempt ${attempt + 1}/6 for payment ${paymentId}`);
+  let payload = "";
+  payload += tlv("00", "01");
+  payload += mai;
+  payload += tlv("52", "0000");
+  payload += tlv("53", "986");
+  payload += tlv("54", amount.toFixed(2));
+  payload += tlv("58", "BR");
+  payload += tlv("59", "SALAO STYLE PLAN");
+  payload += tlv("60", "SAO PAULO");
+  payload += additionalData;
+  payload += "6304";
+  payload += crc16(payload);
+  return payload;
+};
 
-    const pixResponse = await fetch(
-      `${ASAAS_SANDBOX_URL}/payments/${paymentId}/pixQrCode`,
-      { headers: { access_token: apiKey } }
-    );
-
-    const pixData = await pixResponse.json().catch(() => null);
-    const gatewayErrorMessage = extractGatewayErrorMessage(pixData);
-    console.log(`PIX response status: ${pixResponse.status}, has data: ${!!(pixData?.encodedImage || pixData?.payload)}, error: ${gatewayErrorMessage || "none"}, full response: ${JSON.stringify(pixData)}`);
-
-    if (pixResponse.ok && pixData && (pixData.encodedImage || pixData.payload)) {
-      return {
-        pixQrCodeUrl: pixData.encodedImage
-          ? `data:image/png;base64,${pixData.encodedImage}`
-          : null,
-        pixCopiaECola: pixData.payload || null,
-        found: true,
-        terminal: false,
-        errorMessage: null,
-      };
-    }
-
-    if (!pixResponse.ok) {
-      const isTerminalError = pixResponse.status >= 400 && pixResponse.status < 500 && pixResponse.status !== 429;
-
-      if (isTerminalError) {
-        return {
-          pixQrCodeUrl: null,
-          pixCopiaECola: null,
-          found: false,
-          terminal: true,
-          errorMessage:
-            gatewayErrorMessage ||
-            "O gateway recusou a geração do QR Code PIX. Verifique se a chave PIX está ativa na conta Sandbox.",
-        };
-      }
-    }
+const generatePixQrCode = async (pixKey: string, amount: number, description?: string) => {
+  try {
+    const { qrcode } = await import("https://deno.land/x/qrcode@v2.0.0/mod.ts");
+    const brCode = buildBrCode(pixKey, amount, description);
+    const qrDataUrl = await qrcode(brCode, { size: 400 }) as string;
+    return { pixQrCodeUrl: qrDataUrl, pixCopiaECola: brCode, found: true };
+  } catch (err) {
+    console.error("Erro ao gerar QR Code PIX:", err);
+    return { pixQrCodeUrl: null, pixCopiaECola: null, found: false };
   }
-
-  return {
-    pixQrCodeUrl: null,
-    pixCopiaECola: null,
-    found: false,
-    terminal: false,
-    errorMessage: "O QR Code PIX ainda não está disponível no gateway. O sandbox do Asaas pode demorar alguns minutos. Tente novamente em breve.",
-  };
 };
 
 Deno.serve(async (req) => {
@@ -97,6 +75,8 @@ Deno.serve(async (req) => {
     if (!ASAAS_API_KEY) {
       throw new Error("ASAAS_API_KEY is not configured");
     }
+
+    const PIX_KEY = Deno.env.get("PIX_KEY");
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -138,22 +118,39 @@ Deno.serve(async (req) => {
 
     // ── Refresh PIX ──
     if (action === "refresh_pix") {
-      if (!boleto_id || !asaas_payment_id) {
+      if (!boleto_id) {
         return new Response(
-          JSON.stringify({ success: false, error: "boleto_id e asaas_payment_id são obrigatórios" }),
+          JSON.stringify({ success: false, error: "boleto_id é obrigatório" }),
           { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
 
-      const pixData = await fetchPixData(asaas_payment_id, ASAAS_API_KEY);
+      if (!PIX_KEY) {
+        return new Response(
+          JSON.stringify({ success: false, error: "Chave PIX não configurada no sistema." }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      // Get the boleto to know the amount
+      const { data: existingBoleto } = await supabase
+        .from("boletos")
+        .select("amount, description")
+        .eq("id", boleto_id)
+        .single();
+
+      if (!existingBoleto) {
+        return new Response(
+          JSON.stringify({ success: false, error: "Cobrança não encontrada." }),
+          { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      const pixData = await generatePixQrCode(PIX_KEY, existingBoleto.amount, existingBoleto.description || undefined);
 
       if (!pixData.found) {
         return new Response(
-          JSON.stringify({
-            success: false,
-            retryable: !pixData.terminal,
-            error: pixData.errorMessage || "O QR Code PIX ainda não está disponível no gateway. O sandbox do Asaas pode demorar alguns minutos. Tente novamente em breve.",
-          }),
+          JSON.stringify({ success: false, error: "Erro ao gerar QR Code PIX." }),
           { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
@@ -161,7 +158,6 @@ Deno.serve(async (req) => {
       const { error: updateError } = await supabase
         .from("boletos")
         .update({
-          billing_type: "PIX",
           pix_qr_code_url: pixData.pixQrCodeUrl,
           pix_copia_e_cola: pixData.pixCopiaECola,
         })
@@ -260,9 +256,9 @@ Deno.serve(async (req) => {
       throw new Error(`Erro ao gerar cobrança: ${JSON.stringify(paymentData)}`);
     }
 
-    // Always try to fetch PIX QR Code (works for UNDEFINED and PIX billing types)
-    const pixData = paymentData.id
-      ? await fetchPixData(paymentData.id, ASAAS_API_KEY)
+    // Generate PIX QR Code using our own key (independent of Asaas)
+    const pixData = PIX_KEY
+      ? await generatePixQrCode(PIX_KEY, amount, description)
       : { pixQrCodeUrl: null, pixCopiaECola: null, found: false };
 
     // Step 3: Save payment info in database
@@ -294,9 +290,9 @@ Deno.serve(async (req) => {
     return new Response(
       JSON.stringify({
         success: true,
-        pix_pending: !pixData.found && !pixData.terminal,
-        pix_error: !pixData.found ? pixData.errorMessage : null,
-        pix_retryable: !pixData.found ? !pixData.terminal : false,
+        pix_pending: !pixData.found,
+        pix_error: !pixData.found ? "Não foi possível gerar o QR Code PIX." : null,
+        pix_retryable: !pixData.found,
         boleto: {
           id: boleto.id,
           asaas_payment_id: paymentData.id,

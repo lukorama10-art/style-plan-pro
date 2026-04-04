@@ -186,7 +186,7 @@ const Financeiro = () => {
                                           Copiar código PIX
                                         </Button>
                                       )}
-                                      {boleto.asaas_payment_id && !boleto.pix_qr_code_url && (
+                                      {!boleto.pix_qr_code_url && (
                                         <Button
                                           type="button"
                                           variant="outline"
@@ -194,12 +194,11 @@ const Financeiro = () => {
                                           onClick={() =>
                                             refreshPixData.mutate({
                                               boletoId: boleto.id,
-                                              asaasPaymentId: boleto.asaas_payment_id!,
                                             })
                                           }
                                           disabled={refreshPixData.isPending}
                                         >
-                                          {refreshPixData.isPending ? "Carregando..." : "Carregar PIX"}
+                                          {refreshPixData.isPending ? "Gerando..." : "Gerar QR Code PIX"}
                                         </Button>
                                       )}
                                     </div>
