@@ -108,9 +108,13 @@ export const useBoletos = () => {
 
       return response.data;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["boletos"] });
-      toast.success("PIX carregado com sucesso!");
+      if (data?.boleto?.found === false || data?.success === false) {
+        toast.warning(data?.error || "QR Code PIX ainda não disponível. Tente novamente em alguns minutos.");
+      } else {
+        toast.success("PIX carregado com sucesso!");
+      }
     },
     onError: (error: Error) => {
       toast.error(error.message || "Erro ao carregar PIX");
