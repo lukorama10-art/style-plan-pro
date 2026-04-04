@@ -16,6 +16,8 @@ const Dashboard = () => {
     isLoading,
   } = useDashboardData();
 
+  const { lowStockProducts, products } = useProducts();
+
   if (isLoading) {
     return (
       <Layout>
