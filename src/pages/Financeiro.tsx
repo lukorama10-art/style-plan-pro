@@ -160,8 +160,7 @@ const Financeiro = () => {
                                     <p><strong>Vencimento:</strong> {new Date(`${boleto.due_date}T00:00:00`).toLocaleDateString("pt-BR")}</p>
                                   </div>
 
-                                  {billingType === "PIX" && (
-                                    <div className="flex flex-col items-center gap-3 rounded-lg border border-border bg-muted/30 p-4">
+                                  <div className="flex flex-col items-center gap-3 rounded-lg border border-border bg-muted/30 p-4">
                                       <p className="text-sm font-medium flex items-center gap-1">
                                         <QrCode className="w-4 h-4" /> QR Code PIX
                                       </p>
@@ -187,7 +186,7 @@ const Financeiro = () => {
                                           Copiar código PIX
                                         </Button>
                                       )}
-                                      {billingType === "PIX" && boleto.asaas_payment_id && !boleto.pix_qr_code_url && (
+                                      {boleto.asaas_payment_id && !boleto.pix_qr_code_url && (
                                         <Button
                                           type="button"
                                           variant="outline"
@@ -204,7 +203,6 @@ const Financeiro = () => {
                                         </Button>
                                       )}
                                     </div>
-                                  )}
 
                                   {boletoLink && (
                                     <div className="space-y-3 rounded-lg border border-border bg-muted/30 p-4">
