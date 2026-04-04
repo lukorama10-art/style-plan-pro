@@ -47,7 +47,7 @@ const fetchPixData = async (paymentId: string, apiKey: string) => {
 
     const pixData = await pixResponse.json().catch(() => null);
     const gatewayErrorMessage = extractGatewayErrorMessage(pixData);
-    console.log(`PIX response status: ${pixResponse.status}, has data: ${!!(pixData?.encodedImage || pixData?.payload)}, error: ${gatewayErrorMessage || "none"}`);
+    console.log(`PIX response status: ${pixResponse.status}, has data: ${!!(pixData?.encodedImage || pixData?.payload)}, error: ${gatewayErrorMessage || "none"}, full response: ${JSON.stringify(pixData)}`);
 
     if (pixResponse.ok && pixData && (pixData.encodedImage || pixData.payload)) {
       return {
