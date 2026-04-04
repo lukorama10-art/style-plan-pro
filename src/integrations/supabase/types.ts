@@ -139,6 +139,72 @@ export type Database = {
           },
         ]
       }
+      boletos: {
+        Row: {
+          amount: number
+          appointment_id: string | null
+          asaas_customer_id: string | null
+          asaas_payment_id: string | null
+          bank_slip_url: string | null
+          boleto_url: string | null
+          client_id: string | null
+          created_at: string
+          description: string | null
+          due_date: string
+          id: string
+          invoice_url: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          appointment_id?: string | null
+          asaas_customer_id?: string | null
+          asaas_payment_id?: string | null
+          bank_slip_url?: string | null
+          boleto_url?: string | null
+          client_id?: string | null
+          created_at?: string
+          description?: string | null
+          due_date: string
+          id?: string
+          invoice_url?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          appointment_id?: string | null
+          asaas_customer_id?: string | null
+          asaas_payment_id?: string | null
+          bank_slip_url?: string | null
+          boleto_url?: string | null
+          client_id?: string | null
+          created_at?: string
+          description?: string | null
+          due_date?: string
+          id?: string
+          invoice_url?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "boletos_appointment_id_fkey"
+            columns: ["appointment_id"]
+            isOneToOne: false
+            referencedRelation: "appointments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "boletos_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       clients: {
         Row: {
           created_at: string
