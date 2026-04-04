@@ -8,29 +8,6 @@ const corsHeaders = {
 
 const ASAAS_SANDBOX_URL = "https://sandbox.asaas.com/api/v3";
 
-const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
-
-const extractGatewayErrorMessage = (data: any) => {
-  if (!data) return null;
-
-  if (Array.isArray(data.errors) && data.errors.length > 0) {
-    return data.errors
-      .map((error: any) => error?.description || error?.code)
-      .filter(Boolean)
-      .join(" | ");
-  }
-
-  if (typeof data.message === "string" && data.message.trim()) {
-    return data.message;
-  }
-
-  if (typeof data.error === "string" && data.error.trim()) {
-    return data.error;
-  }
-
-  return null;
-};
-
 /* ── BR Code (EMV) helpers ── */
 
 const tlv = (id: string, value: string) =>
