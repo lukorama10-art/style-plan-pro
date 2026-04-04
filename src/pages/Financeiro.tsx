@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ExternalLink, Printer, TrendingUp, Trash2, Eye, Copy, QrCode } from "lucide-react";
+import { ExternalLink, Printer, TrendingUp, Trash2, Eye, Copy, QrCode, Download } from "lucide-react";
 import { toast } from "sonner";
 import Layout from "@/components/Layout";
 import { useFinancialData } from "@/hooks/useFinancialData";
@@ -35,7 +35,7 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer } fro
 
 const Financeiro = () => {
   const { monthlyRevenue, weeklyRevenue, isLoading } = useFinancialData();
-  const { boletos, isLoading: isLoadingBoletos, deleteBoleto, refreshPixData } = useBoletos();
+  const { boletos, isLoading: isLoadingBoletos, deleteBoleto, refreshPixData, downloadBoleto } = useBoletos();
 
   const copyToClipboard = async (value: string, successMessage: string) => {
     try {
@@ -218,12 +218,16 @@ const Financeiro = () => {
                                       </div>
 
                                       <div className="flex flex-col gap-2 sm:flex-row">
-                                        <Button asChild type="button" className="flex-1">
-                                          <a href={boletoLink} target="_self" rel="noreferrer">
-                                            <ExternalLink className="w-4 h-4" />
-                                            {billingType === "PIX" ? "Abrir cobrança" : "Abrir boleto"}
-                                          </a>
-                                        </Button>
+                                        {boleto.asaas_payment_id && (
+                                          <Button
+                                            type="button"
+                                            className="flex-1"
+                                            onClick={() => downloadBoleto(boleto.asaas_payment_id!)}
+                                          >
+                                            <Download className="w-4 h-4" />
+                                            {billingType === "PIX" ? "Baixar cobrança" : "Baixar boleto"}
+                                          </Button>
+                                        )}
 
                                         <Button
                                           type="button"

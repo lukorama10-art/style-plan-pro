@@ -129,11 +129,47 @@ export const useBoletos = () => {
     },
   });
 
+  const downloadBoleto = async (asaasPaymentId: string) => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        toast.error("Não autenticado");
+        return;
+      }
+
+      toast.info("Baixando boleto...");
+
+      const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
+      const url = `https://${projectId}.supabase.co/functions/v1/proxy-boleto`;
+
+      const response = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ asaas_payment_id: asaasPaymentId }),
+      });
+
+      if (!response.ok) {
+        const errData = await response.json().catch(() => null);
+        throw new Error(errData?.error || "Erro ao baixar boleto");
+      }
+
+      const blob = await response.blob();
+      const blobUrl = URL.createObjectURL(blob);
+      window.open(blobUrl, "_blank");
+    } catch (error: any) {
+      toast.error(error.message || "Erro ao baixar boleto");
+    }
+  };
+
   return {
     boletos,
     isLoading,
     generateBoleto,
     deleteBoleto,
     refreshPixData,
+    downloadBoleto,
   };
 };
