@@ -1,7 +1,10 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { TrendingUp } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { ExternalLink, Printer, TrendingUp } from "lucide-react";
 import Layout from "@/components/Layout";
 import { useFinancialData } from "@/hooks/useFinancialData";
+import { useBoletos, type Boleto } from "@/hooks/useBoletos";
 import { formatPrice } from "@/utils/priceFormatter";
 import {
   ChartContainer,
@@ -12,6 +15,27 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer } fro
 
 const Financeiro = () => {
   const { monthlyRevenue, weeklyRevenue, isLoading } = useFinancialData();
+  const { boletos, isLoading: isLoadingBoletos } = useBoletos();
+
+  const getBoletoLink = (boleto: Boleto) =>
+    boleto.boleto_url || boleto.bank_slip_url || boleto.invoice_url;
+
+  const openInNewTab = (url: string) => {
+    window.open(url, "_blank", "noopener,noreferrer");
+  };
+
+  const getStatusVariant = (status: string) => {
+    switch (status.toUpperCase()) {
+      case "RECEIVED":
+      case "CONFIRMED":
+        return "default" as const;
+      case "OVERDUE":
+      case "REFUNDED":
+        return "destructive" as const;
+      default:
+        return "secondary" as const;
+    }
+  };
 
   if (isLoading) {
     return (
@@ -32,6 +56,91 @@ const Financeiro = () => {
             Análise de arrecadação e projeções
           </p>
         </div>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Printer className="w-5 h-5" />
+              Boletos gerados
+            </CardTitle>
+            <p className="text-sm text-muted-foreground">
+              Os boletos são gerados automaticamente ao finalizar o agendamento e ficam disponíveis aqui para visualizar ou imprimir.
+            </p>
+          </CardHeader>
+          <CardContent>
+            {isLoadingBoletos ? (
+              <p className="text-sm text-muted-foreground">Carregando boletos...</p>
+            ) : boletos?.length ? (
+              <div className="space-y-4">
+                {boletos.map((boleto) => {
+                  const boletoLink = getBoletoLink(boleto);
+
+                  return (
+                    <div
+                      key={boleto.id}
+                      className="rounded-lg border border-border bg-card p-4"
+                    >
+                      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                        <div className="space-y-2">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <p className="font-medium text-foreground">
+                              {boleto.description || "Boleto gerado"}
+                            </p>
+                            <Badge variant={getStatusVariant(boleto.status)}>
+                              {boleto.status}
+                            </Badge>
+                          </div>
+                          <div className="space-y-1 text-sm text-muted-foreground">
+                            <p>Valor: {formatPrice(Number(boleto.amount))}</p>
+                            <p>
+                              Vencimento:{" "}
+                              {new Date(`${boleto.due_date}T00:00:00`).toLocaleDateString("pt-BR")}
+                            </p>
+                            <p>
+                              Gerado em:{" "}
+                              {new Date(boleto.created_at).toLocaleString("pt-BR")}
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="flex flex-col gap-2 sm:flex-row">
+                          {boletoLink ? (
+                            <Button
+                              type="button"
+                              onClick={() => openInNewTab(boletoLink)}
+                            >
+                              <Printer className="w-4 h-4" />
+                              Visualizar / imprimir
+                            </Button>
+                          ) : (
+                            <Button type="button" variant="outline" disabled>
+                              Documento indisponível
+                            </Button>
+                          )}
+
+                          {boleto.invoice_url && boleto.invoice_url !== boletoLink && (
+                            <Button
+                              type="button"
+                              variant="outline"
+                              onClick={() => openInNewTab(boleto.invoice_url as string)}
+                            >
+                              <ExternalLink className="w-4 h-4" />
+                              Ver cobrança
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                Ainda não há boletos gerados.
+              </p>
+            )}
+          </CardContent>
+        </Card>
 
         <Card>
           <CardHeader>
