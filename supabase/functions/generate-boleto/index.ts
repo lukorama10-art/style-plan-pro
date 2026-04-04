@@ -141,22 +141,39 @@ Deno.serve(async (req) => {
 
     // ── Refresh PIX ──
     if (action === "refresh_pix") {
-      if (!boleto_id || !asaas_payment_id) {
+      if (!boleto_id) {
         return new Response(
-          JSON.stringify({ success: false, error: "boleto_id e asaas_payment_id são obrigatórios" }),
+          JSON.stringify({ success: false, error: "boleto_id é obrigatório" }),
           { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
 
-      const pixData = await fetchPixData(asaas_payment_id, ASAAS_API_KEY);
+      if (!PIX_KEY) {
+        return new Response(
+          JSON.stringify({ success: false, error: "Chave PIX não configurada no sistema." }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      // Get the boleto to know the amount
+      const { data: existingBoleto } = await supabase
+        .from("boletos")
+        .select("amount, description")
+        .eq("id", boleto_id)
+        .single();
+
+      if (!existingBoleto) {
+        return new Response(
+          JSON.stringify({ success: false, error: "Cobrança não encontrada." }),
+          { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      const pixData = await generatePixQrCode(PIX_KEY, existingBoleto.amount, existingBoleto.description || undefined);
 
       if (!pixData.found) {
         return new Response(
-          JSON.stringify({
-            success: false,
-            retryable: !pixData.terminal,
-            error: pixData.errorMessage || "O QR Code PIX ainda não está disponível no gateway. O sandbox do Asaas pode demorar alguns minutos. Tente novamente em breve.",
-          }),
+          JSON.stringify({ success: false, error: "Erro ao gerar QR Code PIX." }),
           { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
@@ -164,7 +181,6 @@ Deno.serve(async (req) => {
       const { error: updateError } = await supabase
         .from("boletos")
         .update({
-          billing_type: "PIX",
           pix_qr_code_url: pixData.pixQrCodeUrl,
           pix_copia_e_cola: pixData.pixCopiaECola,
         })
