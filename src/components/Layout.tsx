@@ -6,6 +6,7 @@ import {
   Scissors,
   Users,
   DollarSign,
+  Package,
   LogOut,
 } from "lucide-react";
 import {
@@ -34,6 +35,7 @@ const menuItems = [
   { title: "Serviços", icon: Scissors, path: "/servicos" },
   { title: "Clientes", icon: Users, path: "/clientes" },
   { title: "Profissionais", icon: Users, path: "/profissionais" },
+  { title: "Estoque", icon: Package, path: "/estoque" },
   { title: "Financeiro", icon: DollarSign, path: "/financeiro" },
 ];
 

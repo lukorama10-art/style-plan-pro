@@ -1,9 +1,11 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Plus, ChevronLeft, ChevronRight } from "lucide-react";
+import { Plus, ChevronLeft, ChevronRight, CheckCircle } from "lucide-react";
 import Layout from "@/components/Layout";
 import { useAppointments, Appointment } from "@/hooks/useAppointments";
+import { useProducts } from "@/hooks/useProducts";
 import { AppointmentDialog } from "@/components/appointments/AppointmentDialog";
+import { FinalizeServiceDialog } from "@/components/stock/FinalizeServiceDialog";
 import { format, startOfWeek, addDays, addWeeks, subWeeks } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
@@ -24,6 +26,10 @@ const Agenda = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
+  const [finalizeDialogOpen, setFinalizeDialogOpen] = useState(false);
+  const [appointmentToFinalize, setAppointmentToFinalize] = useState<Appointment | null>(null);
+
+  const { products, registerProductUsage } = useProducts();
 
   const weekStart = startOfWeek(currentWeek, { weekStartsOn: 0 });
   const weekEnd = addDays(weekStart, 6);
@@ -87,6 +93,33 @@ const Agenda = () => {
 
   const handleDeleteFromDialog = (id: string) => {
     deleteAppointment.mutateAsync(id);
+  };
+
+  const handleFinalize = (apt: Appointment, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setAppointmentToFinalize(apt);
+    setFinalizeDialogOpen(true);
+  };
+
+  const handleFinalizeSubmit = async (data: {
+    appointment_id: string;
+    professional_id: string;
+    items: { product_id: string; quantity: number }[];
+  }) => {
+    await registerProductUsage.mutateAsync(data);
+    // Update appointment status to completed
+    if (appointmentToFinalize) {
+      await updateAppointment.mutateAsync({
+        id: appointmentToFinalize.id,
+        client_id: appointmentToFinalize.client_id,
+        professional_id: appointmentToFinalize.professional_id,
+        service_ids: appointmentToFinalize.services?.map((s) => s.id) || [],
+        appointment_date: appointmentToFinalize.appointment_date,
+        appointment_time: appointmentToFinalize.appointment_time,
+      });
+    }
+    setFinalizeDialogOpen(false);
+    setAppointmentToFinalize(null);
   };
 
   const previousWeek = () => setCurrentWeek(subWeeks(currentWeek, 1));
@@ -153,14 +186,29 @@ const Agenda = () => {
                           onClick={() => handleEdit(apt)}
                         >
                           <td className="p-4">
-                            <div className="font-semibold text-sm mb-2">
-                              {apt.appointment_time.slice(0, 5)} - {calculateEndTime(apt.appointment_time, apt.services)}
-                            </div>
-                            <div className="text-sm mb-1">
-                              {apt.client?.name} - {apt.services?.map((s) => s.name).join(", ")}
-                            </div>
-                            <div className="text-sm text-muted-foreground">
-                              {apt.professional?.full_name}
+                            <div className="flex items-center justify-between">
+                              <div className="flex-1">
+                                <div className="font-semibold text-sm mb-2">
+                                  {apt.appointment_time.slice(0, 5)} - {calculateEndTime(apt.appointment_time, apt.services)}
+                                </div>
+                                <div className="text-sm mb-1">
+                                  {apt.client?.name} - {apt.services?.map((s) => s.name).join(", ")}
+                                </div>
+                                <div className="text-sm text-muted-foreground">
+                                  {apt.professional?.full_name}
+                                </div>
+                              </div>
+                              {apt.status !== "completed" && (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="ml-2 shrink-0"
+                                  onClick={(e) => handleFinalize(apt, e)}
+                                >
+                                  <CheckCircle className="mr-1 h-4 w-4" />
+                                  Finalizar
+                                </Button>
+                              )}
                             </div>
                           </td>
                         </tr>
@@ -215,6 +263,15 @@ const Agenda = () => {
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
+
+        <FinalizeServiceDialog
+          open={finalizeDialogOpen}
+          onOpenChange={setFinalizeDialogOpen}
+          appointment={appointmentToFinalize}
+          products={products}
+          onSubmit={handleFinalizeSubmit}
+          isLoading={registerProductUsage.isPending}
+        />
       </div>
     </Layout>
   );

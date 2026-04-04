@@ -1,7 +1,8 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Calendar, DollarSign, TrendingUp } from "lucide-react";
+import { Calendar, DollarSign, TrendingUp, Package, AlertTriangle } from "lucide-react";
 import Layout from "@/components/Layout";
 import { useDashboardData } from "@/hooks/useDashboardData";
+import { useProducts } from "@/hooks/useProducts";
 import { formatPrice } from "@/utils/priceFormatter";
 import { Badge } from "@/components/ui/badge";
 
@@ -14,6 +15,8 @@ const Dashboard = () => {
     monthRevenue,
     isLoading,
   } = useDashboardData();
+
+  const { lowStockProducts, products } = useProducts();
 
   if (isLoading) {
     return (
@@ -73,6 +76,38 @@ const Dashboard = () => {
             </Card>
           ))}
         </div>
+
+        {/* Low stock alerts */}
+        {lowStockProducts.length > 0 && (
+          <Card className="border-destructive">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-destructive">
+                <AlertTriangle className="h-5 w-5" />
+                Alertas de Estoque Baixo
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                {lowStockProducts.map((product) => (
+                  <div
+                    key={product.id}
+                    className="flex items-center justify-between p-3 rounded-lg border border-destructive/20 bg-destructive/5"
+                  >
+                    <div>
+                      <p className="font-medium">{product.name}</p>
+                      <p className="text-sm text-muted-foreground">{product.category}</p>
+                    </div>
+                    <div className="text-right">
+                      <Badge variant="destructive">
+                        Qtd: {product.quantity} / Mín: {product.min_quantity}
+                      </Badge>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         <Card>
           <CardHeader>
