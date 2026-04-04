@@ -31,60 +31,61 @@ const extractGatewayErrorMessage = (data: any) => {
   return null;
 };
 
-const fetchPixData = async (paymentId: string, apiKey: string) => {
-  // Try up to 6 times with increasing delays (1s, 2s, 3s, 4s, 5s)
-  for (let attempt = 0; attempt < 6; attempt++) {
-    if (attempt > 0) {
-      await wait(1000 * attempt);
-    }
+/* ── BR Code (EMV) helpers ── */
 
-    console.log(`PIX attempt ${attempt + 1}/6 for payment ${paymentId}`);
+const tlv = (id: string, value: string) =>
+  `${id}${String(value.length).padStart(2, "0")}${value}`;
 
-    const pixResponse = await fetch(
-      `${ASAAS_SANDBOX_URL}/payments/${paymentId}/pixQrCode`,
-      { headers: { access_token: apiKey } }
-    );
-
-    const pixData = await pixResponse.json().catch(() => null);
-    const gatewayErrorMessage = extractGatewayErrorMessage(pixData);
-    console.log(`PIX response status: ${pixResponse.status}, has data: ${!!(pixData?.encodedImage || pixData?.payload)}, error: ${gatewayErrorMessage || "none"}, full response: ${JSON.stringify(pixData)}`);
-
-    if (pixResponse.ok && pixData && (pixData.encodedImage || pixData.payload)) {
-      return {
-        pixQrCodeUrl: pixData.encodedImage
-          ? `data:image/png;base64,${pixData.encodedImage}`
-          : null,
-        pixCopiaECola: pixData.payload || null,
-        found: true,
-        terminal: false,
-        errorMessage: null,
-      };
-    }
-
-    if (!pixResponse.ok) {
-      const isTerminalError = pixResponse.status >= 400 && pixResponse.status < 500 && pixResponse.status !== 429;
-
-      if (isTerminalError) {
-        return {
-          pixQrCodeUrl: null,
-          pixCopiaECola: null,
-          found: false,
-          terminal: true,
-          errorMessage:
-            gatewayErrorMessage ||
-            "O gateway recusou a geração do QR Code PIX. Verifique se a chave PIX está ativa na conta Sandbox.",
-        };
-      }
+const crc16 = (payload: string): string => {
+  const poly = 0x1021;
+  let crc = 0xffff;
+  for (let i = 0; i < payload.length; i++) {
+    crc ^= payload.charCodeAt(i) << 8;
+    for (let j = 0; j < 8; j++) {
+      crc = crc & 0x8000 ? (crc << 1) ^ poly : crc << 1;
+      crc &= 0xffff;
     }
   }
+  return crc.toString(16).toUpperCase().padStart(4, "0");
+};
 
-  return {
-    pixQrCodeUrl: null,
-    pixCopiaECola: null,
-    found: false,
-    terminal: false,
-    errorMessage: "O QR Code PIX ainda não está disponível no gateway. O sandbox do Asaas pode demorar alguns minutos. Tente novamente em breve.",
-  };
+const buildBrCode = (
+  pixKey: string,
+  amount: number,
+  description?: string,
+): string => {
+  const gui = tlv("00", "br.gov.bcb.pix");
+  const key = tlv("01", pixKey);
+  const desc = description ? tlv("02", description.slice(0, 40)) : "";
+  const mai = tlv("26", `${gui}${key}${desc}`);
+  const txId = `SLP${Date.now().toString(36).toUpperCase()}`;
+  const additionalData = tlv("62", tlv("05", txId.slice(0, 25)));
+
+  let payload = "";
+  payload += tlv("00", "01");
+  payload += mai;
+  payload += tlv("52", "0000");
+  payload += tlv("53", "986");
+  payload += tlv("54", amount.toFixed(2));
+  payload += tlv("58", "BR");
+  payload += tlv("59", "SALAO STYLE PLAN");
+  payload += tlv("60", "SAO PAULO");
+  payload += additionalData;
+  payload += "6304";
+  payload += crc16(payload);
+  return payload;
+};
+
+const generatePixQrCode = async (pixKey: string, amount: number, description?: string) => {
+  try {
+    const { qrcode } = await import("https://deno.land/x/qrcode@v2.0.0/mod.ts");
+    const brCode = buildBrCode(pixKey, amount, description);
+    const qrDataUrl = await qrcode(brCode, { size: 400 }) as string;
+    return { pixQrCodeUrl: qrDataUrl, pixCopiaECola: brCode, found: true };
+  } catch (err) {
+    console.error("Erro ao gerar QR Code PIX:", err);
+    return { pixQrCodeUrl: null, pixCopiaECola: null, found: false };
+  }
 };
 
 Deno.serve(async (req) => {
