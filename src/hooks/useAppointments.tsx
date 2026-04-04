@@ -160,16 +160,23 @@ export const useAppointments = (startDate?: string, endDate?: string) => {
     mutationFn: async (appointment: AppointmentInput) => {
       const { service_ids, ...appointmentData } = appointment;
       
-      // Get total duration of selected services
+      // Get total duration and price of selected services
       const { data: servicesData } = await supabase
         .from("services")
-        .select("duration")
+        .select("duration, price, name")
         .in("id", service_ids);
 
       const totalDuration = servicesData?.reduce(
         (total, service) => total + service.duration,
         0
       ) || 0;
+
+      const totalPrice = servicesData?.reduce(
+        (total, service) => total + Number(service.price),
+        0
+      ) || 0;
+
+      const serviceNames = servicesData?.map(s => s.name).join(", ") || "";
 
       // Check for conflicts
       const conflictCheck = await checkTimeConflict(
@@ -214,11 +221,44 @@ export const useAppointments = (startDate?: string, endDate?: string) => {
 
       if (servicesError) throw servicesError;
 
+      // Generate boleto automatically
+      try {
+        // Get client info
+        const { data: clientData } = await supabase
+          .from("clients")
+          .select("name, email")
+          .eq("id", appointmentData.client_id)
+          .single();
+
+        if (clientData && totalPrice > 0) {
+          const { data: { session } } = await supabase.auth.getSession();
+          if (session) {
+            const dueDate = appointmentData.appointment_date;
+            await supabase.functions.invoke("generate-boleto", {
+              body: {
+                appointment_id: data.id,
+                client_id: appointmentData.client_id,
+                client_name: clientData.name,
+                client_email: clientData.email || undefined,
+                amount: totalPrice,
+                due_date: dueDate,
+                description: `Serviços: ${serviceNames}`,
+              },
+            });
+          }
+        }
+      } catch (boletoError) {
+        console.error("Erro ao gerar boleto:", boletoError);
+        // Don't fail the appointment creation if boleto fails
+        toast.error("Agendamento criado, mas houve erro ao gerar o boleto.");
+      }
+
       return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["appointments"] });
-      toast.success("Agendamento criado com sucesso!");
+      queryClient.invalidateQueries({ queryKey: ["boletos"] });
+      toast.success("Agendamento criado com sucesso! Boleto gerado.");
     },
     onError: (error: any) => {
       toast.error(error.message || "Erro ao criar agendamento");
