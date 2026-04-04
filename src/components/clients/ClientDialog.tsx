@@ -14,6 +14,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Client, ClientInput } from "@/hooks/useClients";
 import { Loader2 } from "lucide-react";
 import { formatPhoneNumber, unformatPhoneNumber, validatePhoneNumber } from "@/utils/phoneFormatter";
+import { isValidCpf, sanitizeCpf } from "@/utils/cpf";
 import { toast } from "sonner";
 
 interface ClientDialogProps {
@@ -67,11 +68,17 @@ const ClientDialog = ({
       toast.error("Telefone inválido. Use o formato (XX) XXXXX-XXXX");
       return;
     }
+
+    if (formData.cpf && !isValidCpf(formData.cpf)) {
+      toast.error("CPF inválido. Informe um CPF com dígitos válidos.");
+      return;
+    }
     
     // Remove a formatação do telefone antes de salvar
     const dataToSave = {
       ...formData,
       phone: unformatPhoneNumber(formData.phone),
+      cpf: formData.cpf ? sanitizeCpf(formData.cpf) : "",
     };
     
     if (client) {
