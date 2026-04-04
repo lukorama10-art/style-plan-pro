@@ -218,12 +218,16 @@ const Financeiro = () => {
                                       </div>
 
                                       <div className="flex flex-col gap-2 sm:flex-row">
-                                        <Button asChild type="button" className="flex-1">
-                                          <a href={boletoLink} target="_self" rel="noreferrer">
-                                            <ExternalLink className="w-4 h-4" />
-                                            {billingType === "PIX" ? "Abrir cobrança" : "Abrir boleto"}
-                                          </a>
-                                        </Button>
+                                        {boleto.asaas_payment_id && (
+                                          <Button
+                                            type="button"
+                                            className="flex-1"
+                                            onClick={() => downloadBoleto(boleto.asaas_payment_id!)}
+                                          >
+                                            <Download className="w-4 h-4" />
+                                            {billingType === "PIX" ? "Baixar cobrança" : "Baixar boleto"}
+                                          </Button>
+                                        )}
 
                                         <Button
                                           type="button"
