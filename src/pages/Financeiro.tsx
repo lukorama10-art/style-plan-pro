@@ -140,7 +140,7 @@ const Financeiro = () => {
                               />
                             ) : (
                               <p className="text-xs text-muted-foreground text-center max-w-52">
-                                QR Code indisponível. Cadastre uma chave PIX na sua conta Asaas Sandbox e clique em "Carregar PIX".
+                                QR Code ainda não disponível. O sandbox pode demorar alguns minutos. Clique em "Carregar PIX" para tentar novamente.
                               </p>
                             )}
                             {boleto.pix_copia_e_cola && (
