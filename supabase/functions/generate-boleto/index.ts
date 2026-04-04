@@ -11,13 +11,21 @@ const ASAAS_SANDBOX_URL = "https://sandbox.asaas.com/api/v3";
 const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 const fetchPixData = async (paymentId: string, apiKey: string) => {
-  for (let attempt = 0; attempt < 4; attempt++) {
+  // Try up to 6 times with increasing delays (1s, 2s, 3s, 4s, 5s)
+  for (let attempt = 0; attempt < 6; attempt++) {
+    if (attempt > 0) {
+      await wait(1000 * attempt);
+    }
+
+    console.log(`PIX attempt ${attempt + 1}/6 for payment ${paymentId}`);
+
     const pixResponse = await fetch(
       `${ASAAS_SANDBOX_URL}/payments/${paymentId}/pixQrCode`,
       { headers: { access_token: apiKey } }
     );
 
     const pixData = await pixResponse.json().catch(() => null);
+    console.log(`PIX response status: ${pixResponse.status}, has data: ${!!(pixData?.encodedImage || pixData?.payload)}`);
 
     if (pixResponse.ok && pixData && (pixData.encodedImage || pixData.payload)) {
       return {
@@ -25,17 +33,15 @@ const fetchPixData = async (paymentId: string, apiKey: string) => {
           ? `data:image/png;base64,${pixData.encodedImage}`
           : null,
         pixCopiaECola: pixData.payload || null,
+        found: true,
       };
-    }
-
-    if (attempt < 3) {
-      await wait(500 * (attempt + 1));
     }
   }
 
   return {
     pixQrCodeUrl: null,
     pixCopiaECola: null,
+    found: false,
   };
 };
 
@@ -54,7 +60,6 @@ Deno.serve(async (req) => {
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Validate auth
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
       return new Response(JSON.stringify({ error: "Missing authorization" }), {
@@ -89,6 +94,7 @@ Deno.serve(async (req) => {
       asaas_payment_id,
     } = body;
 
+    // ── Refresh PIX ──
     if (action === "refresh_pix") {
       if (!boleto_id || !asaas_payment_id) {
         return new Response(
@@ -98,6 +104,16 @@ Deno.serve(async (req) => {
       }
 
       const pixData = await fetchPixData(asaas_payment_id, ASAAS_API_KEY);
+
+      if (!pixData.found) {
+        return new Response(
+          JSON.stringify({
+            success: false,
+            error: "O QR Code PIX ainda não está disponível no gateway. O sandbox do Asaas pode demorar alguns minutos. Tente novamente em breve.",
+          }),
+          { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
 
       const { error: updateError } = await supabase
         .from("boletos")
@@ -114,13 +130,11 @@ Deno.serve(async (req) => {
 
       return new Response(
         JSON.stringify({ success: true, boleto: pixData }),
-        {
-          status: 200,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        }
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
+    // ── Create new charge ──
     if (!client_name || !amount || !due_date) {
       return new Response(
         JSON.stringify({ error: "Campos obrigatórios: client_name, amount, due_date" }),
@@ -128,14 +142,13 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Clean CPF - remove formatting
     const cleanCpf = client_cpf ? client_cpf.replace(/\D/g, '') : null;
 
     if (!cleanCpf || cleanCpf.length !== 11) {
       return new Response(
-        JSON.stringify({ 
-          success: false, 
-          error: "CPF do cliente é obrigatório para geração de boleto. Cadastre o CPF no perfil do cliente." 
+        JSON.stringify({
+          success: false,
+          error: "CPF do cliente é obrigatório para geração de cobrança. Cadastre o CPF no perfil do cliente.",
         }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
@@ -158,10 +171,9 @@ Deno.serve(async (req) => {
     const customerData = await customerResponse.json();
     let customerId = customerData.id;
 
-    // If customer already exists, find them
     if (!customerId && customerData.errors) {
       const isAlreadyRegistered = customerData.errors.some(
-        (e: any) => e.description?.toLowerCase().includes("já cadastrado") || 
+        (e: any) => e.description?.toLowerCase().includes("já cadastrado") ||
                      e.code === "invalid_cpfCnpj_already_in_use"
       );
 
@@ -180,7 +192,7 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Step 2: Create boleto payment
+    // Step 2: Create payment
     const validBillingType = billing_type === "PIX" ? "PIX" : "BOLETO";
 
     const paymentResponse = await fetch(`${ASAAS_SANDBOX_URL}/payments`, {
@@ -202,13 +214,13 @@ Deno.serve(async (req) => {
 
     if (!paymentResponse.ok) {
       console.error("Asaas payment error:", paymentData);
-      throw new Error(`Erro ao gerar boleto: ${JSON.stringify(paymentData)}`);
+      throw new Error(`Erro ao gerar cobrança: ${JSON.stringify(paymentData)}`);
     }
 
     // Step 2.5: If PIX, fetch the QR Code
     const pixData = validBillingType === "PIX" && paymentData.id
       ? await fetchPixData(paymentData.id, ASAAS_API_KEY)
-      : { pixQrCodeUrl: null, pixCopiaECola: null };
+      : { pixQrCodeUrl: null, pixCopiaECola: null, found: false };
 
     // Step 3: Save payment info in database
     const { data: boleto, error: insertError } = await supabase
@@ -233,12 +245,13 @@ Deno.serve(async (req) => {
 
     if (insertError) {
       console.error("Insert error:", insertError);
-      throw new Error(`Erro ao salvar boleto: ${insertError.message}`);
+      throw new Error(`Erro ao salvar cobrança: ${insertError.message}`);
     }
 
     return new Response(
       JSON.stringify({
         success: true,
+        pix_pending: validBillingType === "PIX" && !pixData.found,
         boleto: {
           id: boleto.id,
           asaas_payment_id: paymentData.id,
