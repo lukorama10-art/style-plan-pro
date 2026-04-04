@@ -92,6 +92,8 @@ const Financeiro = () => {
               <div className="space-y-4">
                 {boletos.map((boleto) => {
                   const boletoLink = getBoletoLink(boleto);
+                  const billingType = boleto.billing_type ?? (boleto.pix_qr_code_url || boleto.pix_copia_e_cola ? "PIX" : "BOLETO");
+                  const hasPixData = Boolean(boleto.pix_qr_code_url || boleto.pix_copia_e_cola);
 
                   return (
                     <div
@@ -102,10 +104,10 @@ const Financeiro = () => {
                         <div className="space-y-2">
                           <div className="flex flex-wrap items-center gap-2">
                             <p className="font-medium text-foreground">
-                              {boleto.description || "Boleto gerado"}
+                              {boleto.description || "Cobrança gerada"}
                             </p>
                             <Badge variant="outline">
-                              {boleto.billing_type === "PIX" ? "PIX" : "Boleto"}
+                              {billingType === "PIX" ? "PIX" : "Boleto"}
                             </Badge>
                             <Badge variant={getStatusVariant(boleto.status)}>
                               {boleto.status}
@@ -124,16 +126,22 @@ const Financeiro = () => {
                           </div>
                         </div>
 
-                        {boleto.billing_type === "PIX" && boleto.pix_qr_code_url && (
+                        {billingType === "PIX" && hasPixData && (
                           <div className="mt-3 flex flex-col items-center gap-2 rounded-lg border border-border bg-background p-4">
                             <p className="text-sm font-medium flex items-center gap-1">
                               <QrCode className="w-4 h-4" /> QR Code PIX
                             </p>
-                            <img
-                              src={boleto.pix_qr_code_url}
-                              alt="QR Code PIX"
-                              className="w-48 h-48 rounded"
-                            />
+                            {boleto.pix_qr_code_url ? (
+                              <img
+                                src={boleto.pix_qr_code_url}
+                                alt="QR Code PIX"
+                                className="w-48 h-48 rounded"
+                              />
+                            ) : (
+                              <p className="text-xs text-muted-foreground text-center max-w-48">
+                                QR Code ainda em processamento. Use o botão abaixo para abrir a cobrança.
+                              </p>
+                            )}
                             {boleto.pix_copia_e_cola && (
                               <Button
                                 type="button"
@@ -149,10 +157,10 @@ const Financeiro = () => {
                         )}
 
                         <div className="flex flex-col gap-2 sm:flex-row">
-                          {boleto.invoice_url ? (
+                          {boletoLink ? (
                             <Button
                               type="button"
-                              onClick={() => openInNewTab(boleto.invoice_url as string)}
+                              onClick={() => openInNewTab(boletoLink as string)}
                             >
                               <ExternalLink className="w-4 h-4" />
                               Ver cobrança
@@ -193,7 +201,7 @@ const Financeiro = () => {
               </div>
             ) : (
               <p className="text-sm text-muted-foreground">
-                Ainda não há boletos gerados.
+                Ainda não há cobranças geradas.
               </p>
             )}
           </CardContent>
