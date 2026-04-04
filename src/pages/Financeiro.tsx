@@ -26,7 +26,7 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer } fro
 
 const Financeiro = () => {
   const { monthlyRevenue, weeklyRevenue, isLoading } = useFinancialData();
-  const { boletos, isLoading: isLoadingBoletos } = useBoletos();
+  const { boletos, isLoading: isLoadingBoletos, deleteBoleto } = useBoletos();
 
   const getBoletoLink = (boleto: Boleto) =>
     boleto.boleto_url || boleto.bank_slip_url || boleto.invoice_url;
