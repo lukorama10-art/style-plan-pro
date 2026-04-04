@@ -233,7 +233,7 @@ export const useAppointments = (startDate?: string, endDate?: string) => {
 
         if (clientData && totalPrice > 0) {
           if (!clientData.cpf || !isValidCpf(clientData.cpf)) {
-            toast.error("Agendamento criado! O PIX não foi gerado porque o CPF do cliente é inválido.");
+            toast.error("Agendamento criado! A cobrança não foi gerada porque o CPF do cliente é inválido.");
             return data;
           }
 
@@ -251,6 +251,7 @@ export const useAppointments = (startDate?: string, endDate?: string) => {
                 due_date: dueDate,
                 description: `Serviços: ${serviceNames}`,
                 billing_type: "PIX",
+
               },
             });
             if (response.error) {
@@ -259,7 +260,7 @@ export const useAppointments = (startDate?: string, endDate?: string) => {
             if (response.data && !response.data.success) {
               throw new Error(response.data.error);
             }
-            toast.success("Agendamento criado com sucesso! PIX gerado.");
+            toast.success("Agendamento criado com sucesso! Cobrança gerada.");
           }
         }
       } catch (boletoError: any) {
