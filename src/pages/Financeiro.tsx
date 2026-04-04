@@ -127,10 +127,10 @@ const Financeiro = () => {
                           </div>
                         </div>
 
-                        {billingType === "PIX" && hasPixData && (
+                        {billingType === "PIX" && (
                           <div className="mt-3 flex flex-col items-center gap-2 rounded-lg border border-border bg-background p-4">
                             <p className="text-sm font-medium flex items-center gap-1">
-                              <QrCode className="w-4 h-4" /> QR Code PIX
+                              <QrCode className="w-4 h-4" /> PIX
                             </p>
                             {boleto.pix_qr_code_url ? (
                               <img
@@ -139,8 +139,8 @@ const Financeiro = () => {
                                 className="w-48 h-48 rounded"
                               />
                             ) : (
-                              <p className="text-xs text-muted-foreground text-center max-w-48">
-                                QR Code ainda em processamento. Use o botão abaixo para abrir a cobrança.
+                              <p className="text-xs text-muted-foreground text-center max-w-52">
+                                QR Code indisponível. Cadastre uma chave PIX na sua conta Asaas Sandbox e clique em "Carregar PIX".
                               </p>
                             )}
                             {boleto.pix_copia_e_cola && (
@@ -167,14 +167,14 @@ const Financeiro = () => {
                                 }
                                 disabled={refreshPixData.isPending}
                               >
-                                Atualizar PIX
+                                {refreshPixData.isPending ? "Carregando..." : "Carregar PIX"}
                               </Button>
                             )}
                           </div>
                         )}
 
                         <div className="flex flex-col gap-2 sm:flex-row">
-                          {billingType === "PIX" && hasPixData ? null : boletoLink ? (
+                          {billingType === "PIX" ? null : boletoLink ? (
                             <Button
                               type="button"
                               onClick={() => openInNewTab(boletoLink as string)}
