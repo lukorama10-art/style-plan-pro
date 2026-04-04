@@ -65,6 +65,14 @@ const App = () => (
             }
           />
           <Route
+            path="/estoque"
+            element={
+              <ProtectedRoute>
+                <Estoque />
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/financeiro"
             element={
               <ProtectedRoute>
