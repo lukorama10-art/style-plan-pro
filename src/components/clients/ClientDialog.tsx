@@ -45,6 +45,7 @@ const ClientDialog = ({
         name: client.name,
         email: client.email || "",
         phone: formatPhoneNumber(client.phone),
+        cpf: client.cpf || "",
         notes: client.notes || "",
       });
     } else {
@@ -52,6 +53,7 @@ const ClientDialog = ({
         name: "",
         email: "",
         phone: "",
+        cpf: "",
         notes: "",
       });
     }
