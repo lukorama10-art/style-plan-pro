@@ -131,7 +131,7 @@ export const useBoletos = () => {
 
   const downloadBoleto = async (asaasPaymentId: string) => {
     try {
-      toast.info("Baixando boleto...");
+      toast.info("Preparando boleto...");
 
       const response = await supabase.functions.invoke("proxy-boleto", {
         body: { asaas_payment_id: asaasPaymentId },
@@ -141,26 +141,31 @@ export const useBoletos = () => {
         throw new Error(response.error.message || "Erro ao baixar boleto");
       }
 
-      // The response.data will be the raw response when content-type is not JSON
-      // supabase.functions.invoke returns Blob for non-JSON responses
-      const blob = response.data instanceof Blob
-        ? response.data
-        : new Blob([JSON.stringify(response.data)], { type: "application/pdf" });
+      if (!response.data?.success || !response.data?.base64) {
+        throw new Error(response.data?.error || "Arquivo do boleto indisponível");
+      }
+
+      const binary = atob(response.data.base64);
+      const bytes = new Uint8Array(binary.length);
+
+      for (let i = 0; i < binary.length; i += 1) {
+        bytes[i] = binary.charCodeAt(i);
+      }
+
+      const blob = new Blob([bytes], {
+        type: response.data.contentType || "application/pdf",
+      });
 
       const blobUrl = URL.createObjectURL(blob);
-
-      // Use anchor click to trigger download (avoids popup blockers)
       const a = document.createElement("a");
       a.href = blobUrl;
-      a.target = "_blank";
-      a.rel = "noopener";
+      a.download = response.data.fileName || `boleto-${asaasPaymentId}.pdf`;
       a.style.display = "none";
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
-
-      // Cleanup after a delay
       setTimeout(() => URL.revokeObjectURL(blobUrl), 10000);
+      toast.success("Boleto baixado com sucesso!");
     } catch (error: any) {
       toast.error(error.message || "Erro ao baixar boleto");
     }
