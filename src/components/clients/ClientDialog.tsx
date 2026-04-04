@@ -35,6 +35,7 @@ const ClientDialog = ({
     name: "",
     email: "",
     phone: "",
+    cpf: "",
     notes: "",
   });
 
