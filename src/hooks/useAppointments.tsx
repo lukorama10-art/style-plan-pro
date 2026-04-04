@@ -250,7 +250,7 @@ export const useAppointments = (startDate?: string, endDate?: string) => {
                 amount: totalPrice,
                 due_date: dueDate,
                 description: `Serviços: ${serviceNames}`,
-                billing_type: "PIX",
+                billing_type: "BOLETO",
 
               },
             });
