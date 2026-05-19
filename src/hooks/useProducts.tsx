@@ -296,6 +296,7 @@ export const useProducts = () => {
     updateProduct,
     deleteProduct,
     addStockEntry,
+    addStockExit,
     registerProductUsage,
   };
 };
