@@ -73,20 +73,20 @@ const Layout = ({ children }: LayoutProps) => {
             </SidebarGroup>
           </SidebarContent>
           <SidebarFooter className="border-t p-4">
-            <Button
-              variant="ghost"
-              className="w-full justify-start"
-              onClick={signOut}
-            >
-              <LogOut className="mr-2 h-4 w-4" />
-              Sair
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="ghost"
+                className="flex-1 justify-start"
+                onClick={signOut}
+              >
+                <LogOut className="mr-2 h-4 w-4" />
+                Sair
+              </Button>
+              <ThemeToggle />
+            </div>
           </SidebarFooter>
         </Sidebar>
         <main className="flex-1 overflow-auto bg-background">
-          <div className="flex justify-end p-3 border-b">
-            <ThemeToggle />
-          </div>
           {children}
         </main>
       </div>
