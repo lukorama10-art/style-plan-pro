@@ -219,15 +219,6 @@ const Agenda = () => {
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
-
-        <FinalizeServiceDialog
-          open={finalizeDialogOpen}
-          onOpenChange={setFinalizeDialogOpen}
-          appointment={appointmentToFinalize}
-          products={products}
-          onSubmit={handleFinalizeSubmit}
-          isLoading={registerProductUsage.isPending}
-        />
       </div>
     </Layout>
   );
