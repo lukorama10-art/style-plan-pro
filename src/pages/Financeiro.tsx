@@ -114,9 +114,7 @@ const Financeiro = () => {
                             <p className="font-medium text-foreground">
                               {boleto.description || "Cobrança gerada"}
                             </p>
-                            <Badge variant="outline">
-                              {billingType === "PIX" ? "PIX" : "Boleto"}
-                            </Badge>
+                            <Badge variant="outline">PIX</Badge>
                             <Badge variant={getStatusVariant(boleto.status)}>
                               {boleto.status}
                             </Badge>
