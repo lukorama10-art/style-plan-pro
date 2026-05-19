@@ -42,17 +42,25 @@ export function AppointmentChargeDialog({ appointment }: Props) {
       toast.error("Valor do agendamento inválido.");
       return;
     }
-    generateBoleto.mutate({
-      appointment_id: appointment.id,
-      client_id: client.id,
-      client_name: client.name,
-      client_cpf: client.cpf,
-      client_email: client.email || undefined,
-      amount: totalAmount,
-      due_date: appointment.appointment_date,
-      description: `Serviços: ${appointment.services?.map((s) => s.name).join(", ") || ""}`,
-      billing_type: "UNDEFINED",
-    });
+    try {
+      const result: any = await generateBoleto.mutateAsync({
+        appointment_id: appointment.id,
+        client_id: client.id,
+        client_name: client.name,
+        client_cpf: client.cpf,
+        client_email: client.email || undefined,
+        amount: totalAmount,
+        due_date: appointment.appointment_date,
+        description: `Serviços: ${appointment.services?.map((s) => s.name).join(", ") || ""}`,
+        billing_type: "UNDEFINED",
+      });
+      const newBoletoId = result?.boleto?.id;
+      if (newBoletoId && !result?.boleto?.pix_qr_code_url) {
+        await refreshPixData.mutateAsync({ boletoId: newBoletoId });
+      }
+    } catch {
+      // toast handled in mutation
+    }
   };
 
   return (
