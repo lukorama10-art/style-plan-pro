@@ -24,6 +24,7 @@ import {
 } from "@/components/ui/sidebar";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
+import ThemeToggle from "@/components/ThemeToggle";
 
 interface LayoutProps {
   children: ReactNode;
@@ -83,6 +84,9 @@ const Layout = ({ children }: LayoutProps) => {
           </SidebarFooter>
         </Sidebar>
         <main className="flex-1 overflow-auto bg-background">
+          <div className="flex justify-end p-3 border-b">
+            <ThemeToggle />
+          </div>
           {children}
         </main>
       </div>
