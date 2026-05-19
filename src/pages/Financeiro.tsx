@@ -1,30 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Printer, TrendingUp, Trash2, Eye, Copy, QrCode } from "lucide-react";
-import { toast } from "sonner";
+import { TrendingUp } from "lucide-react";
 import Layout from "@/components/Layout";
 import { useFinancialData } from "@/hooks/useFinancialData";
-import { useBoletos, type Boleto } from "@/hooks/useBoletos";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
 import { formatPrice } from "@/utils/priceFormatter";
 import {
   ChartContainer,
@@ -35,37 +12,6 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer } fro
 
 const Financeiro = () => {
   const { monthlyRevenue, weeklyRevenue, isLoading } = useFinancialData();
-  const { boletos, isLoading: isLoadingBoletos, deleteBoleto, refreshPixData, downloadBoleto } = useBoletos();
-
-  const copyToClipboard = async (value: string, successMessage: string) => {
-    try {
-      await navigator.clipboard.writeText(value);
-      toast.success(successMessage);
-    } catch {
-      toast.error("Não foi possível copiar o conteúdo.");
-    }
-  };
-
-  const copyPixCode = (code: string) => {
-    void copyToClipboard(code, "Código PIX copiado!");
-  };
-
-  const copyPaymentLink = (link: string) => {
-    void copyToClipboard(link, "Link da cobrança copiado!");
-  };
-
-  const getStatusVariant = (status: string) => {
-    switch (status.toUpperCase()) {
-      case "RECEIVED":
-      case "CONFIRMED":
-        return "default" as const;
-      case "OVERDUE":
-      case "REFUNDED":
-        return "destructive" as const;
-      default:
-        return "secondary" as const;
-    }
-  };
 
   if (isLoading) {
     return (
