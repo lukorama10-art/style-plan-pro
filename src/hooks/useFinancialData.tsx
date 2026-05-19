@@ -48,23 +48,14 @@ export const useFinancialData = () => {
       const monthlyData: { [key: string]: { revenue: number; hasCompleted: boolean; hasFuture: boolean } } = {};
 
       appointments?.forEach((appointment: any) => {
+        if (appointment.status !== "completed") return;
         const date = parseISO(appointment.appointment_date);
         const monthKey = format(date, "yyyy-MM");
-        const isCompleted = appointment.status === "completed";
-        const isFutureDate = isFuture(date);
 
         if (!monthlyData[monthKey]) {
-          monthlyData[monthKey] = { revenue: 0, hasCompleted: false, hasFuture: false };
+          monthlyData[monthKey] = { revenue: 0, hasCompleted: true, hasFuture: false };
         }
 
-        if (isCompleted) {
-          monthlyData[monthKey].hasCompleted = true;
-        }
-        if (isFutureDate || appointment.status === "scheduled") {
-          monthlyData[monthKey].hasFuture = true;
-        }
-
-        // Somar preços dos serviços
         const serviceRevenue = appointment.appointment_services?.reduce((sum: number, as: any) => {
           return sum + (Number(as.services?.price) || 0);
         }, 0) || 0;
