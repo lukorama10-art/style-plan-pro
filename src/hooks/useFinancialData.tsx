@@ -116,7 +116,7 @@ export const useFinancialData = () => {
         `)
         .gte("appointment_date", format(today, "yyyy-MM-dd"))
         .lte("appointment_date", format(endDate, "yyyy-MM-dd"))
-        .in("status", ["scheduled"])
+        .neq("status", "cancelled")
         .order("appointment_date", { ascending: true });
 
       if (error) throw error;

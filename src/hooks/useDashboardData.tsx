@@ -74,7 +74,7 @@ export const useDashboardData = () => {
           )
         `)
         .eq("appointment_date", todayDate)
-        .in("status", ["scheduled"]);
+        .neq("status", "cancelled");
 
       if (error) throw error;
 
@@ -108,7 +108,7 @@ export const useDashboardData = () => {
         `)
         .gte("appointment_date", weekStart)
         .lte("appointment_date", weekEnd)
-        .in("status", ["scheduled"]);
+        .neq("status", "cancelled");
 
       if (error) throw error;
 
@@ -142,7 +142,7 @@ export const useDashboardData = () => {
         `)
         .gte("appointment_date", monthStart)
         .lte("appointment_date", monthEnd)
-        .in("status", ["scheduled"]);
+        .neq("status", "cancelled");
 
       if (error) throw error;
 
