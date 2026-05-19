@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Plus, ChevronLeft, ChevronRight } from "lucide-react";
+import { Plus, ChevronLeft, ChevronRight, CheckCircle2, XCircle } from "lucide-react";
 import Layout from "@/components/Layout";
 import { useAppointments, Appointment } from "@/hooks/useAppointments";
 import { AppointmentDialog } from "@/components/appointments/AppointmentDialog";
@@ -32,6 +32,7 @@ const Agenda = () => {
     isLoading,
     createAppointment,
     updateAppointment,
+    updateStatus,
     deleteAppointment,
   } = useAppointments(
     format(weekStart, "yyyy-MM-dd"),
@@ -149,11 +150,15 @@ const Agenda = () => {
                       dayAppointments.map((apt) => (
                         <tr
                           key={apt.id}
-                          className="border-b last:border-b-0 cursor-pointer hover:bg-accent transition-colors"
+                          className={cn(
+                            "border-b last:border-b-0 cursor-pointer hover:bg-accent transition-colors",
+                            apt.status === "completed" && "border-l-4 border-l-green-500",
+                            apt.status === "cancelled" && "border-l-4 border-l-red-500 opacity-70"
+                          )}
                           onClick={() => handleEdit(apt)}
                         >
                           <td className="p-4">
-                            <div className="flex items-center justify-between">
+                            <div className="flex items-center justify-between gap-4">
                               <div className="flex-1">
                                 <div className="font-semibold text-sm mb-2">
                                   {apt.appointment_time.slice(0, 5)} - {calculateEndTime(apt.appointment_time, apt.services)}
@@ -164,6 +169,33 @@ const Agenda = () => {
                                 <div className="text-sm text-muted-foreground">
                                   {apt.professional?.full_name}
                                 </div>
+                              </div>
+                              <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
+                                <Button
+                                  size="sm"
+                                  variant={apt.status === "completed" ? "default" : "outline"}
+                                  className={cn(
+                                    apt.status === "completed" && "bg-green-600 hover:bg-green-700 text-white",
+                                    apt.status !== "completed" && "border-green-500 text-green-700 hover:bg-green-50"
+                                  )}
+                                  onClick={() => updateStatus.mutate({ id: apt.id, status: "completed" })}
+                                  disabled={updateStatus.isPending}
+                                >
+                                  <CheckCircle2 className="w-4 h-4 mr-1" />
+                                  Efetivado
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant={apt.status === "cancelled" ? "destructive" : "outline"}
+                                  className={cn(
+                                    apt.status !== "cancelled" && "border-red-500 text-red-700 hover:bg-red-50"
+                                  )}
+                                  onClick={() => updateStatus.mutate({ id: apt.id, status: "cancelled" })}
+                                  disabled={updateStatus.isPending}
+                                >
+                                  <XCircle className="w-4 h-4 mr-1" />
+                                  Cancelado
+                                </Button>
                               </div>
                             </div>
                           </td>
