@@ -165,17 +165,6 @@ const Agenda = () => {
                                   {apt.professional?.full_name}
                                 </div>
                               </div>
-                              {apt.status !== "completed" && (
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  className="ml-2 shrink-0"
-                                  onClick={(e) => handleFinalize(apt, e)}
-                                >
-                                  <CheckCircle className="mr-1 h-4 w-4" />
-                                  Finalizar
-                                </Button>
-                              )}
                             </div>
                           </td>
                         </tr>
