@@ -78,7 +78,7 @@ export const useBoletos = () => {
         return;
       }
 
-      toast.success("Boleto gerado com sucesso!");
+      toast.success("Cobrança gerada com sucesso!");
     },
     onError: (error: Error) => {
       toast.error(error.message || "Erro ao gerar boleto");
