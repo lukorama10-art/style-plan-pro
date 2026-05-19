@@ -4,6 +4,7 @@ import { Plus, ChevronLeft, ChevronRight, CheckCircle2, XCircle } from "lucide-r
 import Layout from "@/components/Layout";
 import { useAppointments, Appointment } from "@/hooks/useAppointments";
 import { AppointmentDialog } from "@/components/appointments/AppointmentDialog";
+import { AppointmentChargeDialog } from "@/components/appointments/AppointmentChargeDialog";
 import { format, startOfWeek, addDays, addWeeks, subWeeks } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
