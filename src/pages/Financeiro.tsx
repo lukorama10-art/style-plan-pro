@@ -144,12 +144,12 @@ const Financeiro = () => {
                                 <DialogHeader>
                                   <DialogTitle>{boleto.description || "Cobrança"}</DialogTitle>
                                   <DialogDescription>
-                                    Visualize os dados da cobrança e use o link abaixo sem depender de pop-up.
+                                    Visualize os dados da cobrança PIX.
                                   </DialogDescription>
                                 </DialogHeader>
                                 <div className="space-y-4">
                                   <div className="space-y-1 text-sm">
-                                    <p><strong>Tipo:</strong> {billingType}</p>
+                                    <p><strong>Tipo:</strong> PIX</p>
                                     <p><strong>Valor:</strong> {formatPrice(Number(boleto.amount))}</p>
                                     <p><strong>Status:</strong> {boleto.status}</p>
                                     <p><strong>Vencimento:</strong> {new Date(`${boleto.due_date}T00:00:00`).toLocaleDateString("pt-BR")}</p>
@@ -197,42 +197,6 @@ const Financeiro = () => {
                                         </Button>
                                       )}
                                     </div>
-
-                                  {boletoLink && (
-                                    <div className="space-y-3 rounded-lg border border-border bg-muted/30 p-4">
-                                      <div className="space-y-1">
-                                        <p className="text-sm font-medium">
-                                          {billingType === "PIX" ? "Link da cobrança" : "Link do boleto"}
-                                        </p>
-                                        <p className="break-all text-xs text-muted-foreground">
-                                          {boletoLink}
-                                        </p>
-                                      </div>
-
-                                      <div className="flex flex-col gap-2 sm:flex-row">
-                                        {boleto.asaas_payment_id && (
-                                          <Button
-                                            type="button"
-                                            className="flex-1"
-                                            onClick={() => downloadBoleto(boleto.asaas_payment_id!)}
-                                          >
-                                            <Download className="w-4 h-4" />
-                                            {billingType === "PIX" ? "Baixar cobrança" : "Baixar boleto"}
-                                          </Button>
-                                        )}
-
-                                        <Button
-                                          type="button"
-                                          variant="outline"
-                                          className="flex-1"
-                                          onClick={() => copyPaymentLink(boletoLink)}
-                                        >
-                                          <Copy className="w-4 h-4" />
-                                          Copiar link
-                                        </Button>
-                                      </div>
-                                    </div>
-                                  )}
                                 </div>
                               </DialogContent>
                             </Dialog>
