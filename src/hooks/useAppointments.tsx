@@ -397,6 +397,7 @@ export const useAppointments = (startDate?: string, endDate?: string) => {
     isLoading,
     createAppointment,
     updateAppointment,
+    updateStatus,
     deleteAppointment,
   };
 };
