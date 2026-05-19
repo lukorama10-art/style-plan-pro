@@ -104,6 +104,13 @@ const Estoque = () => {
               Registrar Entrada
             </Button>
             <Button
+              variant="outline"
+              onClick={() => setExitDialogOpen(true)}
+            >
+              <PackageMinus className="mr-2 h-4 w-4" />
+              Registrar Saída
+            </Button>
+            <Button
               onClick={() => {
                 setSelectedProduct(null);
                 setProductDialogOpen(true);
