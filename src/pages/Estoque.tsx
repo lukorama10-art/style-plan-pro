@@ -1,11 +1,12 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, PackagePlus, Search, AlertTriangle, Pencil, Trash2 } from "lucide-react";
+import { Plus, PackagePlus, PackageMinus, Search, AlertTriangle, Pencil, Trash2 } from "lucide-react";
 import Layout from "@/components/Layout";
 import { useProducts, Product, PRODUCT_CATEGORIES } from "@/hooks/useProducts";
 import { ProductDialog } from "@/components/stock/ProductDialog";
 import { StockEntryDialog } from "@/components/stock/StockEntryDialog";
+import { StockExitDialog } from "@/components/stock/StockExitDialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
