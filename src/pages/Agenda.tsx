@@ -32,6 +32,7 @@ const Agenda = () => {
     isLoading,
     createAppointment,
     updateAppointment,
+    updateStatus,
     deleteAppointment,
   } = useAppointments(
     format(weekStart, "yyyy-MM-dd"),
