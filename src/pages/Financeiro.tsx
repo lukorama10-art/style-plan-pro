@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ExternalLink, Printer, TrendingUp, Trash2, Eye, Copy, QrCode, Download } from "lucide-react";
+import { Printer, TrendingUp, Trash2, Eye, Copy, QrCode } from "lucide-react";
 import { toast } from "sonner";
 import Layout from "@/components/Layout";
 import { useFinancialData } from "@/hooks/useFinancialData";
