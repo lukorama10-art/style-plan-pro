@@ -1,15 +1,12 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Plus, ChevronLeft, ChevronRight, CheckCircle } from "lucide-react";
+import { Plus, ChevronLeft, ChevronRight } from "lucide-react";
 import Layout from "@/components/Layout";
 import { useAppointments, Appointment } from "@/hooks/useAppointments";
-import { useProducts } from "@/hooks/useProducts";
 import { AppointmentDialog } from "@/components/appointments/AppointmentDialog";
-import { FinalizeServiceDialog } from "@/components/stock/FinalizeServiceDialog";
 import { format, startOfWeek, addDays, addWeeks, subWeeks } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
-import { Separator } from "@/components/ui/separator";
 import {
   AlertDialog,
   AlertDialogAction,
