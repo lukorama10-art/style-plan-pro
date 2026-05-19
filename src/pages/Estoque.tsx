@@ -77,6 +77,11 @@ const Estoque = () => {
     setEntryDialogOpen(false);
   };
 
+  const handleExitSubmit = async (data: any) => {
+    await addStockExit.mutateAsync(data);
+    setExitDialogOpen(false);
+  };
+
   const confirmDelete = async () => {
     if (selectedProduct) {
       await deleteProduct.mutateAsync(selectedProduct.id);
