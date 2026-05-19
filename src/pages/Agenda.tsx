@@ -23,7 +23,8 @@ const Agenda = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
-  const [finalizeDialogOpen, setFinalizeDialogOpen] = useState(false);
+
+  const weekStart = startOfWeek(currentWeek, { weekStartsOn: 0 });
   const [appointmentToFinalize, setAppointmentToFinalize] = useState<Appointment | null>(null);
 
   const { products, registerProductUsage } = useProducts();
