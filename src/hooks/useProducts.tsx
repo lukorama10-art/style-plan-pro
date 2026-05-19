@@ -176,7 +176,48 @@ export const useProducts = () => {
     },
   });
 
+  const addStockExit = useMutation({
+    mutationFn: async ({
+      product_id,
+      quantity,
+      notes,
+    }: {
+      product_id: string;
+      quantity: number;
+      notes?: string;
+    }) => {
+      const product = products?.find((p) => p.id === product_id);
+      if (!product) throw new Error("Produto não encontrado");
+      if (product.quantity < quantity) {
+        throw new Error(
+          `Estoque insuficiente para "${product.name}". Disponível: ${product.quantity}, Solicitado: ${quantity}`
+        );
+      }
+
+      const { error: movError } = await supabase
+        .from("stock_movements")
+        .insert([{ product_id, movement_type: "exit", quantity, notes }] as any);
+      if (movError) throw movError;
+
+      const { error } = await supabase
+        .from("products")
+        .update({ quantity: product.quantity - quantity })
+        .eq("id", product_id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["products"] });
+      queryClient.invalidateQueries({ queryKey: ["products-low-stock"] });
+      queryClient.invalidateQueries({ queryKey: ["stock-movements"] });
+      toast.success("Saída registrada com sucesso!");
+    },
+    onError: (error: any) => {
+      toast.error("Erro ao registrar saída: " + error.message);
+    },
+  });
+
   const registerProductUsage = useMutation({
+
     mutationFn: async ({
       appointment_id,
       professional_id,
@@ -255,6 +296,7 @@ export const useProducts = () => {
     updateProduct,
     deleteProduct,
     addStockEntry,
+    addStockExit,
     registerProductUsage,
   };
 };

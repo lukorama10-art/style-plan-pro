@@ -1,11 +1,12 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, PackagePlus, Search, AlertTriangle, Pencil, Trash2 } from "lucide-react";
+import { Plus, PackagePlus, PackageMinus, Search, AlertTriangle, Pencil, Trash2 } from "lucide-react";
 import Layout from "@/components/Layout";
 import { useProducts, Product, PRODUCT_CATEGORIES } from "@/hooks/useProducts";
 import { ProductDialog } from "@/components/stock/ProductDialog";
 import { StockEntryDialog } from "@/components/stock/StockEntryDialog";
+import { StockExitDialog } from "@/components/stock/StockExitDialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
@@ -35,10 +36,12 @@ const Estoque = () => {
     updateProduct,
     deleteProduct,
     addStockEntry,
+    addStockExit,
   } = useProducts();
 
   const [productDialogOpen, setProductDialogOpen] = useState(false);
   const [entryDialogOpen, setEntryDialogOpen] = useState(false);
+  const [exitDialogOpen, setExitDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [search, setSearch] = useState("");
@@ -74,6 +77,11 @@ const Estoque = () => {
     setEntryDialogOpen(false);
   };
 
+  const handleExitSubmit = async (data: any) => {
+    await addStockExit.mutateAsync(data);
+    setExitDialogOpen(false);
+  };
+
   const confirmDelete = async () => {
     if (selectedProduct) {
       await deleteProduct.mutateAsync(selectedProduct.id);
@@ -94,6 +102,13 @@ const Estoque = () => {
             >
               <PackagePlus className="mr-2 h-4 w-4" />
               Registrar Entrada
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => setExitDialogOpen(true)}
+            >
+              <PackageMinus className="mr-2 h-4 w-4" />
+              Registrar Saída
             </Button>
             <Button
               onClick={() => {
@@ -322,6 +337,15 @@ const Estoque = () => {
           products={products}
           isLoading={addStockEntry.isPending}
         />
+
+        <StockExitDialog
+          open={exitDialogOpen}
+          onOpenChange={setExitDialogOpen}
+          onSubmit={handleExitSubmit}
+          products={products}
+          isLoading={addStockExit.isPending}
+        />
+
 
         <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
           <AlertDialogContent>
