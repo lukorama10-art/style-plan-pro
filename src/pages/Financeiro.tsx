@@ -103,9 +103,6 @@ const Financeiro = () => {
             ) : boletos?.length ? (
               <div className="space-y-4">
                 {boletos.map((boleto) => {
-                  const billingType = boleto.billing_type ?? (boleto.pix_qr_code_url || boleto.pix_copia_e_cola ? "PIX" : "BOLETO");
-                  const boletoLink = boleto.boleto_url || boleto.bank_slip_url || boleto.invoice_url;
-
                   return (
                     <div
                       key={boleto.id}
