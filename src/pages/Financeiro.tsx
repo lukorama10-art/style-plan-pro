@@ -94,7 +94,7 @@ const Financeiro = () => {
               Cobranças geradas
             </CardTitle>
             <p className="text-sm text-muted-foreground">
-              As cobranças (PIX/Boleto) são geradas automaticamente ao finalizar o agendamento.
+              As cobranças PIX são geradas automaticamente ao criar o agendamento.
             </p>
           </CardHeader>
           <CardContent>
