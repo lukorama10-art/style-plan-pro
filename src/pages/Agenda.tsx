@@ -172,7 +172,7 @@ const Agenda = () => {
                                 </div>
                               </div>
                               <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
-                                <AppointmentChargeDialog appointmentId={apt.id} />
+                                <AppointmentChargeDialog appointment={apt} />
                                 <Button
                                   size="sm"
                                   variant={apt.status === "completed" ? "default" : "outline"}
