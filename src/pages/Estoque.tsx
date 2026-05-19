@@ -338,6 +338,15 @@ const Estoque = () => {
           isLoading={addStockEntry.isPending}
         />
 
+        <StockExitDialog
+          open={exitDialogOpen}
+          onOpenChange={setExitDialogOpen}
+          onSubmit={handleExitSubmit}
+          products={products}
+          isLoading={addStockExit.isPending}
+        />
+
+
         <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
           <AlertDialogContent>
             <AlertDialogHeader>
