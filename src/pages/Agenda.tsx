@@ -25,11 +25,6 @@ const Agenda = () => {
   const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
 
   const weekStart = startOfWeek(currentWeek, { weekStartsOn: 0 });
-  const [appointmentToFinalize, setAppointmentToFinalize] = useState<Appointment | null>(null);
-
-  const { products, registerProductUsage } = useProducts();
-
-  const weekStart = startOfWeek(currentWeek, { weekStartsOn: 0 });
   const weekEnd = addDays(weekStart, 6);
 
   const {
