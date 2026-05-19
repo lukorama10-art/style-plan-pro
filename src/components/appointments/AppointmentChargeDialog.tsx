@@ -28,7 +28,7 @@ export function AppointmentChargeDialog({ appointment }: Props) {
     }
   };
 
-  const handleGenerate = () => {
+  const handleGenerate = async () => {
     const client = clients?.find((c) => c.id === appointment.client_id);
     if (!client) {
       toast.error("Cliente não encontrado.");
