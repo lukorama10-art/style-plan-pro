@@ -355,6 +355,29 @@ export const useAppointments = (startDate?: string, endDate?: string) => {
     },
   });
 
+  const updateStatus = useMutation({
+    mutationFn: async ({ id, status }: { id: string; status: string }) => {
+      const { error } = await supabase
+        .from("appointments")
+        .update({ status })
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["appointments"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard-today-appointments"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard-today-revenue"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard-week-revenue"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard-month-revenue"] });
+      queryClient.invalidateQueries({ queryKey: ["financial-monthly"] });
+      queryClient.invalidateQueries({ queryKey: ["financial-weekly"] });
+      toast.success("Status atualizado!");
+    },
+    onError: (error: any) => {
+      toast.error("Erro ao atualizar status: " + error.message);
+    },
+  });
+
   const deleteAppointment = useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase.from("appointments").delete().eq("id", id);
