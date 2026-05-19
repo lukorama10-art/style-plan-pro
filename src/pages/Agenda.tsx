@@ -88,32 +88,6 @@ const Agenda = () => {
     deleteAppointment.mutateAsync(id);
   };
 
-  const handleFinalize = (apt: Appointment, e: React.MouseEvent) => {
-    e.stopPropagation();
-    setAppointmentToFinalize(apt);
-    setFinalizeDialogOpen(true);
-  };
-
-  const handleFinalizeSubmit = async (data: {
-    appointment_id: string;
-    professional_id: string;
-    items: { product_id: string; quantity: number }[];
-  }) => {
-    await registerProductUsage.mutateAsync(data);
-    // Update appointment status to completed
-    if (appointmentToFinalize) {
-      await updateAppointment.mutateAsync({
-        id: appointmentToFinalize.id,
-        client_id: appointmentToFinalize.client_id,
-        professional_id: appointmentToFinalize.professional_id,
-        service_ids: appointmentToFinalize.services?.map((s) => s.id) || [],
-        appointment_date: appointmentToFinalize.appointment_date,
-        appointment_time: appointmentToFinalize.appointment_time,
-      });
-    }
-    setFinalizeDialogOpen(false);
-    setAppointmentToFinalize(null);
-  };
 
   const previousWeek = () => setCurrentWeek(subWeeks(currentWeek, 1));
   const nextWeek = () => setCurrentWeek(addWeeks(currentWeek, 1));
