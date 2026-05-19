@@ -36,10 +36,12 @@ const Estoque = () => {
     updateProduct,
     deleteProduct,
     addStockEntry,
+    addStockExit,
   } = useProducts();
 
   const [productDialogOpen, setProductDialogOpen] = useState(false);
   const [entryDialogOpen, setEntryDialogOpen] = useState(false);
+  const [exitDialogOpen, setExitDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [search, setSearch] = useState("");
