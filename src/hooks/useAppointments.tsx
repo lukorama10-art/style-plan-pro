@@ -229,6 +229,18 @@ export const useAppointments = (startDate?: string, endDate?: string) => {
 
       const serviceNames = servicesData?.map(s => s.name).join(", ") || "";
 
+      // Check professional availability (working hours)
+      const availabilityCheck = await checkAvailability(
+        appointmentData.professional_id,
+        appointmentData.appointment_date,
+        appointmentData.appointment_time,
+        totalDuration
+      );
+
+      if (!availabilityCheck.available) {
+        throw new Error(availabilityCheck.reason || "Profissional indisponível neste horário.");
+      }
+
       // Check for conflicts
       const conflictCheck = await checkTimeConflict(
         appointmentData.professional_id,
