@@ -86,6 +86,56 @@ export const useAppointments = (startDate?: string, endDate?: string) => {
     },
   });
 
+  // Function to check if professional is available at given date/time
+  const checkAvailability = async (
+    professionalId: string,
+    date: string,
+    startTime: string,
+    durationMinutes: number
+  ): Promise<{ available: boolean; reason?: string }> => {
+    const dayOfWeek = new Date(date + "T00:00:00").getDay();
+
+    const { data: slots, error } = await supabase
+      .from("availability")
+      .select("start_time, end_time, is_available")
+      .eq("professional_id", professionalId)
+      .eq("day_of_week", dayOfWeek)
+      .eq("is_available", true);
+
+    if (error) throw error;
+
+    if (!slots || slots.length === 0) {
+      return {
+        available: false,
+        reason: "O profissional não atende neste dia da semana.",
+      };
+    }
+
+    const [sh, sm] = startTime.split(":").map(Number);
+    const startMin = sh * 60 + sm;
+    const endMin = startMin + durationMinutes;
+
+    const fitsInSlot = slots.some((slot) => {
+      const [ash, asm] = slot.start_time.split(":").map(Number);
+      const [aeh, aem] = slot.end_time.split(":").map(Number);
+      const aStart = ash * 60 + asm;
+      const aEnd = aeh * 60 + aem;
+      return startMin >= aStart && endMin <= aEnd;
+    });
+
+    if (!fitsInSlot) {
+      const ranges = slots
+        .map((s) => `${s.start_time.slice(0, 5)}-${s.end_time.slice(0, 5)}`)
+        .join(", ");
+      return {
+        available: false,
+        reason: `Horário fora do expediente do profissional. Disponível: ${ranges}.`,
+      };
+    }
+
+    return { available: true };
+  };
+
   // Function to check for scheduling conflicts
   const checkTimeConflict = async (
     professionalId: string,
